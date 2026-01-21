@@ -1,0 +1,234 @@
+<!-- lista.html - Ultimate Cowboy™ Cinemático com Poeira -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 Karaoke do Cowboy™ - Lista de Músicas</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    /* Fundo animado pôr-do-sol */
+    body {
+        font-family: 'Georgia', serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        animation: sunsetBG 30s ease-in-out infinite alternate;
+        background: linear-gradient(180deg, #fff8f0 0%, #fcd09b 50%, #f4a261 100%);
+        transition: background 1s ease;
+    }
+
+    @keyframes sunsetBG {
+        0% { background: linear-gradient(180deg, #fff8f0 0%, #fcd09b 50%, #f4a261 100%); }
+        50% { background: linear-gradient(180deg, #fff3e0 0%, #fbc788 50%, #f4974e 100%); }
+        100% { background: linear-gradient(180deg, #ffe8d6 0%, #fbbf70 50%, #f48c42 100%); }
+    }
+
+    h1 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        color: #8b4513;
+        text-shadow: 1px 1px #ffd700;
+        text-align: center;
+    }
+
+    /* Cards musicais Cowboy™ com textura de madeira e brilho contínuo */
+    .musica-card {
+        background: linear-gradient(135deg, #e0cda9 0%, #d2a679 25%, #c68642 50%, #d2a679 75%, #e0cda9 100%);
+        border: 2px solid #8b4513;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 0 0 8px rgba(0,0,0,0.15);
+        animation: cardGlow 3s ease-in-out infinite alternate;
+    }
+
+    .musica-card::after {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 6px;
+        background: repeating-linear-gradient(
+            45deg,
+            #8b4513,
+            #8b4513 4px,
+            #d2a679 4px,
+            #d2a679 6px
+        );
+        border-radius: 0 0 12px 12px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+    }
+
+    @keyframes cardGlow {
+        0% { box-shadow: inset 0 0 8px rgba(0,0,0,0.15), 0 0 0 rgba(255,215,0,0); }
+        50% { box-shadow: inset 0 0 8px rgba(0,0,0,0.15), 0 0 15px rgba(255,215,0,0.5); }
+        100% { box-shadow: inset 0 0 8px rgba(0,0,0,0.15), 0 0 8px rgba(255,215,0,0.3); }
+    }
+
+    .musica-icon {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 1.5rem;
+        color: #ffd700;
+        text-shadow: 0 0 2px #8b4513;
+        animation: iconGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes iconGlow {
+        0% { text-shadow: 0 0 2px #8b4513, 0 0 4px #ffd700; transform: rotate(0deg) scale(1); }
+        50% { text-shadow: 0 0 8px #ffd700, 0 0 12px #fffacd, 0 0 16px #ffd700; transform: rotate(-5deg) scale(1.1); }
+        100% { text-shadow: 0 0 2px #8b4513, 0 0 4px #ffd700; transform: rotate(0deg) scale(1); }
+    }
+
+    .musica-codigo { font-weight: bold; color: #5a2d0c; margin-bottom: 0.25rem; text-shadow: 0 1px 0 #fff8f0; }
+    .musica-nome { font-size: 1rem; font-weight: bold; margin-bottom: 0.25rem; color: #3e1f0d; }
+    .musica-artista { font-size: 0.85rem; color: #4b2e1b; }
+
+    .form-control, .btn { border-radius: 0.25rem; }
+
+    .btn-primary { background-color: #d2691e; border-color: #8b4513; }
+    .btn-primary:hover { background-color: #8b4513; border-color: #5a2d0c; }
+
+    @media (max-width: 576px) {
+        .musica-nome { font-size: 0.95rem; }
+        .musica-artista { font-size: 0.8rem; }
+        .musica-card { animation: none; box-shadow: inset 0 0 8px rgba(0,0,0,0.15); }
+        .musica-icon { animation: none; text-shadow: 0 0 2px #8b4513; transform: scale(1); }
+    }
+
+    /* Canvas da poeira */
+    #dustCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* não interfere nos cliques */
+        z-index: 0;
+    }
+    .container { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+<canvas id="dustCanvas"></canvas>
+
+<div class="container mt-4">
+    <h1>🎵 Karaoke do Cowboy™</h1>
+
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-12 col-sm-6 col-md-3">
+            <input type="text" name="codigo" value="{{ request.GET.codigo }}" class="form-control" placeholder="Buscar por Código" autofocus>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <input type="text" name="artista" value="{{ request.GET.artista }}" class="form-control" placeholder="Buscar por Artista">
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <input type="text" name="nome" value="{{ request.GET.nome }}" class="form-control" placeholder="Buscar por Nome">
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Buscar</button>
+        </div>
+    </form>
+
+    {% if erro %}
+        <div class="alert alert-danger">{{ erro }}</div>
+    {% endif %}
+
+    <div class="row g-3">
+        {% for musica in musicas %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="{% url 'detalhe_musica' codigo=musica.codigo %}" class="text-decoration-none">
+                    <div class="musica-card">
+                        <div class="musica-icon">🎵</div>
+                        <div class="musica-codigo">Código: {{ musica.codigo }}</div>
+                        <div class="musica-nome">{{ musica.nome }}</div>
+                        <div class="musica-artista">{{ musica.artista }}</div>
+                    </div>
+                </a>
+            </div>
+        {% empty %}
+            <p class="text-muted">Nenhuma música encontrada.</p>
+        {% endfor %}
+    </div>
+
+    <nav aria-label="Paginação" class="mt-3">
+        <ul class="pagination justify-content-center flex-wrap">
+            {% if tem_anterior %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagina|add:-1 }}&artista={{ artista }}&nome={{ nome }}&codigo={{ request.GET.codigo }}" aria-label="Anterior">⬅ Anterior</a>
+                </li>
+            {% endif %}
+            {% if tem_proxima %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagina|add:1 }}&artista={{ artista }}&nome={{ nome }}&codigo={{ request.GET.codigo }}" aria-label="Próxima">Próxima ➡</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Busca por ENTER automática -->
+<script>
+const form = document.querySelector('form');
+form.addEventListener('keypress', function(event) {
+    if (event.key === "Enter") { form.submit(); }
+});
+
+// Canvas de poeira
+const canvas = document.getElementById('dustCanvas');
+const ctx = canvas.getContext('2d');
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+class Dust {
+    constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.radius = Math.random() * 2 + 1;
+        this.speed = Math.random() * 0.3 + 0.1;
+        this.alpha = Math.random() * 0.5 + 0.3;
+    }
+    update() {
+        this.y -= this.speed;
+        if (this.y < 0) {
+            this.y = height;
+            this.x = Math.random() * width;
+        }
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+        ctx.fill();
+    }
+}
+
+const dustParticles = [];
+for (let i=0; i<120; i++) { dustParticles.push(new Dust()); }
+
+function animateDust() {
+    ctx.clearRect(0, 0, width, height);
+    dustParticles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animateDust);
+}
+animateDust();
+
+window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
