@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Modo Palco</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            color: white;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain;
+            background: black;
+        }
+
+        .voltar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 999;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<button class="voltar" onclick="voltar()">⬅ Voltar</button>
+
+<script>
+function voltar() {
+    const voltarUrl = "{{ voltar_url|default:'' }}";
+
+    if (voltarUrl) {
+        window.location.href = voltarUrl;
+    } else {
+        window.location.href = "{% url 'lista_musicas' %}";
+    }
+}
+</script>
+
+
+
+<video
+    id="video"
+    controls
+    autoplay
+    playsinline
+    webkit-playsinline
+    preload="auto"
+    src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
+>
+    Seu navegador não suporta vídeo.
+</video>
+
+<script>
+function voltar() {
+    window.location.href = "{% url 'detalhe_musica' musica.codigo %}";
+}
+
+// iOS precisa de interação em alguns casos
+document.addEventListener("click", function () {
+    const video = document.getElementById("video");
+    if (video.paused) {
+        video.play().catch(() => {});
+    }
+});
+</script>
+
+</body>
+</html>

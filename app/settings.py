@@ -13,8 +13,20 @@ SECRET_KEY = 'django-insecure-=$t@uobqb!o903h7-bz*1$!5(uxlg7_oxrre_#p8!l!44wud6+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Hosts permitidos
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    "karaoke.karaokedocowboy.art.br",
+    "localhost",
+    "127.0.0.1",
+]
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://karaoke.karaokedocowboy.art.br",
+]
+
 
 
 # Application definition

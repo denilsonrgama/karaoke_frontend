@@ -1,133 +1,189 @@
-<!-- details.html - Ultimate Cowboy™ Cinemático -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎵 Karaoke do Cowboy™ - Detalhes</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
+/* ===== BASE ===== */
 body {
     font-family: 'Georgia', serif;
-    margin: 0; padding: 0; overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(180deg, #fff8f0, #fcd09b, #f4a261);
     animation: sunsetBG 30s ease-in-out infinite alternate;
-    background: linear-gradient(180deg, #fff8f0 0%, #fcd09b 50%, #f4a261 100%);
 }
+
 @keyframes sunsetBG {
-    0% { background: linear-gradient(180deg, #fff8f0, #fcd09b, #f4a261); }
-    100% { background: linear-gradient(180deg, #ffe8d6, #fbbf70, #f48c42); }
+    from { background: linear-gradient(180deg, #fff8f0, #fcd09b, #f4a261); }
+    to   { background: linear-gradient(180deg, #ffe8d6, #fbbf70, #f48c42); }
 }
-h1 { text-align:center; color:#8b4513; text-shadow:1px 1px #ffd700; margin-bottom:1.5rem; }
 
-.musica-card { background: linear-gradient(135deg,#e0cda9,#c68642); border:2px solid #8b4513; border-radius:12px; padding:1rem; margin-bottom:1rem; position:relative; box-shadow: inset 0 0 8px rgba(0,0,0,0.15); animation: glow 3s infinite alternate; }
-@keyframes glow { 0% { box-shadow: inset 0 0 8px rgba(0,0,0,0.15); } 100% { box-shadow: 0 0 15px rgba(255,215,0,0.6); } }
-.musica-icon { position:absolute; top:8px; right:12px; font-size:1.5rem; color:gold; }
-.musica-codigo { font-weight:bold; color:#5a2d0c; }
-.musica-nome { font-size:1.4rem; font-weight:bold; }
-.musica-artista { font-size:1rem; color:#4b2e1b; }
+h1 {
+    text-align: center;
+    color: #8b4513;
+    text-shadow: 1px 1px #ffd700;
+    margin-bottom: 1.5rem;
+}
 
-.video-container { background: #000; border-radius:12px; overflow:hidden; border:3px solid #8b4513; margin-bottom:1rem; }
-video { width:100%; height:auto; }
+/* ===== CARD ===== */
+.musica-card {
+    background: linear-gradient(135deg,#e0cda9,#c68642);
+    border: 2px solid #8b4513;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    box-shadow: inset 0 0 8px rgba(0,0,0,.15);
+}
 
-pre.letra { background:#fff8dc; padding:0.5rem; border-radius:8px; font-size:0.9rem; line-height:1.4; white-space: pre-wrap; max-height:200px; overflow-y:auto; }
+.musica-icon {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 1.5rem;
+    color: gold;
+}
 
-.btn-back { background-color:#d2691e; border-color:#8b4513; color:white; }
-.btn-back:hover { background-color:#8b4513; }
+.musica-codigo { font-weight: bold; color: #5a2d0c; }
+.musica-nome { font-size: 1.4rem; font-weight: bold; }
+.musica-artista { color: #4b2e1b; }
 
-body.palco { background:black !important; }
-body.palco .musica-card, body.palco .btn-back, body.palco h1 { display:none; }
-body.palco pre.letra { background:black; color:#ffd700; font-size:1.2rem; }
-body.palco video { max-height:100vh; width:100vw; }
+/* ===== VIDEO ===== */
+.video-container {
+    background: black;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 3px solid #8b4513;
+    margin-bottom: 1rem;
+}
 
-#dustCanvas { position:fixed; inset:0; pointer-events:none; z-index:0; }
-.container { position: relative; z-index:1; }
+video {
+    width: 100%;
+    height: auto;
+    background: black;
+}
+
+/* ===== LETRA ===== */
+pre.letra {
+    background: #fff8dc;
+    padding: .6rem;
+    border-radius: 8px;
+    font-size: .9rem;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ===== BOTÕES ===== */
+.btn-back {
+    background-color: #d2691e;
+    border-color: #8b4513;
+    color: white;
+}
+
+.btn-back:hover {
+    background-color: #8b4513;
+}
+
+.btn-palco {
+    width: 100%;
+    margin-bottom: 1rem;
+    background-color: #8b4513;
+    border: 2px solid #ffd700;
+    color: #ffd700;
+    font-weight: bold;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+/* ===== DESKTOP MODO PALCO ===== */
+@media (min-width: 768px) {
+    body.palco {
+        background: black;
+    }
+
+    body.palco h1,
+    body.palco .musica-card,
+    body.palco .btn-back,
+    body.palco .btn-palco {
+        display: none;
+    }
+
+    body.palco pre.letra {
+        background: black;
+        color: #ffd700;
+        font-size: 1.2rem;
+    }
+
+    body.palco video {
+        width: 100vw;
+        height: 100vh;
+    }
+}
 </style>
 </head>
-<body>
 
-<canvas id="dustCanvas"></canvas>
+<body>
 
 <div class="container mt-4 mb-5">
     <h1>🎵 Karaoke do Cowboy™</h1>
 
-    {% if erro %}
-        <div class="alert alert-danger">{{ erro }}</div>
-        <a href="{% url 'lista_musicas' %}" class="btn btn-back">⬅ Voltar</a>
-    {% else %}
+    <div class="musica-card">
+        <div class="musica-icon">🎵</div>
+        <div class="musica-codigo">Código: {{ musica.codigo }}</div>
+        <div class="musica-nome">{{ musica.nome }}</div>
+        <div class="musica-artista">{{ musica.artista }}</div>
+    </div>
 
-        <div class="musica-card">
-            <div class="musica-icon">🎵</div>
-            <div class="musica-codigo">Código: {{ musica.codigo }}</div>
-            <div class="musica-nome">{{ musica.nome }}</div>
-            <div class="musica-artista">Artista: {{ musica.artista }}</div>
-        </div>
+    <!-- BOTÃO MODO PALCO -->
+    <button id="palcoBtn" class="btn-palco">
+        🎤 Modo Palco
+    </button>
 
-        <button id="palcoBtn" class="btn btn-dark w-100 mb-2">🎤 Modo Palco</button>
+    <div class="video-container">
+        <video id="video" controls playsinline preload="metadata">
+            <source src="{% url 'stream_video' musica.codigo %}?token={{ token }}" type="video/mp4">
+        </video>
+    </div>
 
-        <div class="video-container">
-            <video
-  controls
-  playsinline
-  preload="metadata"
-  style="width:100%; background:black">
-  
-  <source
-    src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
-    type="video/mp4">
-
-            </video>
-        </div>
-
-        {% if musica.letra %}
-            <pre id="letra" class="letra">{{ musica.letra }}</pre>
-        {% endif %}
-
-        <a href="{% url 'lista_musicas' %}" class="btn btn-back mt-3">⬅ Voltar à Lista</a>
-
+    {% if musica.letra %}
+        <pre class="letra">{{ musica.letra }}</pre>
     {% endif %}
+
+    <a href="{% url 'lista_musicas' %}" class="btn btn-back mt-3">
+        ⬅ Voltar à Lista
+    </a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- POEIRA -->
-<script>
-const canvas = document.getElementById("dustCanvas");
-const ctx = canvas.getContext("2d");
-function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
-resize(); window.addEventListener("resize",resize);
-class Dust{ constructor(){ this.x=Math.random()*canvas.width; this.y=Math.random()*canvas.height; this.r=Math.random()*2+1; this.s=Math.random()*0.4+0.1; this.a=Math.random()*0.5+0.3; } update(){ this.y-=this.s;if(this.y<0)this.y=canvas.height; } draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle=`rgba(255,255,255,${this.a})`; ctx.fill(); } }
-const dust = Array.from({length:120},()=>new Dust());
-(function animate(){ ctx.clearRect(0,0,canvas.width,canvas.height); dust.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(animate); })();
-</script>
-
-<!-- MODO PALCO + iOS INTERAÇÃO -->
 <script>
 const palcoBtn = document.getElementById("palcoBtn");
 const video = document.getElementById("video");
+const isMobile = window.innerWidth < 768;
 
-// iOS exige clique do usuário para reproduzir
 palcoBtn.addEventListener("click", async () => {
-    if(!document.fullscreenElement){
-        try{
-            // solicita fullscreen
-            await video.requestFullscreen();
-        } catch(e){ console.warn("Fullscreen bloqueado:", e); }
 
-        document.body.classList.add("palco");
-
-        // só toca ao clicar
-        video.play().catch(()=>{ console.log("iOS exige interação do usuário"); });
-    } else {
-        if(document.fullscreenElement){
-            await document.exitFullscreen();
-        }
-        document.body.classList.remove("palco");
+    if (isMobile) {
+        // MOBILE: Safari assume fullscreen nativo
+        video.play();
+        return;
     }
+
+    // DESKTOP
+    document.body.classList.add("palco");
+
+    try {
+        await video.requestFullscreen();
+    } catch (e) {}
+
+    video.play();
 });
 
 document.addEventListener("fullscreenchange", () => {
-    if(!document.fullscreenElement){
+    if (!document.fullscreenElement) {
         document.body.classList.remove("palco");
     }
 });

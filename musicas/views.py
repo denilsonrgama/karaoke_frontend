@@ -1,17 +1,24 @@
 # karaoke_frontend/musicas/views.py
-from django.conf import settings
-import os
-from django.http import StreamingHttpResponse, Http404, HttpResponseForbidden
-from django.core import signing
-from .services import buscar_musica_por_codigo
 
+from django.conf import settings
+from django.http import (
+    JsonResponse,
+    StreamingHttpResponse,
+    Http404,
+    HttpResponse,
+)
+from django.core import signing
 from django.shortcuts import render, redirect
+
 from .services import buscar_musica_por_codigo, buscar_musicas
 
-
+import mimetypes
+import os
+import re
 
 # Token válido por 5 minutos
 TOKEN_TTL = 300  # segundos
+
 
 # -----------------------------
 # LISTA DE MÚSICAS
@@ -26,7 +33,6 @@ def lista_musicas(request):
     except ValueError:
         pagina = 1
 
-    # Redireciona para detalhe se código informado
     if codigo:
         return redirect("detalhe_musica", codigo=str(codigo).zfill(5))
 
@@ -70,52 +76,101 @@ def detalhe_musica(request, codigo):
             status=404
         )
 
-    # Gera token seguro para streaming
     token = signing.dumps(codigo, salt="video-stream")
+
+    next_url = request.GET.get("next")
 
     return render(
         request,
         "musicas/details.html",
-        {"musica": musica, "token": token}
+        {
+            "musica": musica,
+            "token": token,
+            "next_url": next_url,
+        }
     )
 
 
 # -----------------------------
-# STREAM DE VÍDEO
+# MODO PALCO (NOVA VIEW HTML)
 # -----------------------------
-TOKEN_TTL = 300  # 5 minutos
+def modo_palco(request, codigo):
+    codigo = str(codigo).zfill(5)
+    musica = buscar_musica_por_codigo(codigo)
 
+    if not musica:
+        raise Http404("Música não encontrada")
+
+    token = signing.dumps(codigo, salt="video-stream")
+
+    next_url = request.GET.get("next")
+
+    return render(
+        request,
+        "musicas/palco.html",
+        {
+            "musica": musica,
+            "token": token,
+            "voltar_url": next_url,
+        }
+    )
+
+
+# -----------------------------
+# STREAM DE VÍDEO (NÃO MEXER)
+# -----------------------------
 def stream_video(request, codigo):
+
     token = request.GET.get("token")
     if not token:
-        return HttpResponseForbidden("Token não fornecido")
+        return JsonResponse({"error": "Token não fornecido"}, status=403)
 
-    # valida token
     try:
         token_codigo = signing.loads(token, salt="video-stream", max_age=TOKEN_TTL)
     except signing.SignatureExpired:
-        return HttpResponseForbidden("Token expirado")
+        return JsonResponse({"error": "Token expirado"}, status=403)
     except signing.BadSignature:
-        return HttpResponseForbidden("Token inválido")
+        return JsonResponse({"error": "Token inválido"}, status=403)
 
     if str(codigo).zfill(5) != token_codigo:
-        return HttpResponseForbidden("Token não corresponde ao vídeo")
+        return JsonResponse({"error": "Token não corresponde"}, status=403)
 
     musica = buscar_musica_por_codigo(str(codigo).zfill(5))
-    if not musica or not musica.get("caminho_video"):
-        raise Http404("Arquivo de vídeo não encontrado")
+    if not musica:
+        raise Http404("Música não encontrada")
 
-    # monta caminho físico no disco usando MEDIA_ROOT + nome do arquivo
     path = os.path.join(settings.MEDIA_ROOT, musica["caminho_video"])
     if not os.path.exists(path):
-        raise Http404("Arquivo de vídeo não encontrado")
+        raise Http404("Vídeo não encontrado")
 
-    def file_iterator(path, chunk_size=8192):
+    file_size = os.path.getsize(path)
+    content_type, _ = mimetypes.guess_type(path)
+    content_type = content_type or "video/mp4"
+
+    range_header = request.headers.get("Range", "").strip()
+    range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
+
+    if range_match:
+        start = int(range_match.group(1))
+        end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+        end = min(end, file_size - 1)
+
+        length = end - start + 1
+
         with open(path, "rb") as f:
-            while chunk := f.read(chunk_size):
-                yield chunk
+            f.seek(start)
+            data = f.read(length)
 
-    response = StreamingHttpResponse(file_iterator(path), content_type="video/mp4")
-    response["Content-Length"] = os.path.getsize(path)
-    response["Accept-Ranges"] = "bytes"
+        response = HttpResponse(data, status=206, content_type=content_type)
+        response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
+        response["Accept-Ranges"] = "bytes"
+        response["Content-Length"] = str(length)
+    else:
+        response = StreamingHttpResponse(
+            open(path, "rb"),
+            content_type=content_type
+        )
+        response["Content-Length"] = str(file_size)
+        response["Accept-Ranges"] = "bytes"
+
     return response
