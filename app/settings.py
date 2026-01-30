@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "musicas",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -131,7 +133,19 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # destrói sessão ao fechar navegador
 SESSION_COOKIE_AGE = 3600  # opcional: tempo máximo de sessão
 SESSION_COOKIE_SECURE = True  # só em HTTPS
 CSRF_COOKIE_SECURE = True     # só em HTTPS
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev']  # ajuste conforme necessário
+#CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev']  # ajuste conforme necessário
+
+
+#accounts/models.py
+AUTH_USER_MODEL = "accounts.User"
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"  # opcional (ou "login")
+
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "webmaster@localhost"
+
 
 
 # Caminho para os vídeos de karaoke

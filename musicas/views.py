@@ -1,5 +1,6 @@
 # karaoke_frontend/musicas/views.py
-
+from django.utils import timezone as dj_timezone
+from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import (
     JsonResponse,
@@ -7,22 +8,46 @@ from django.http import (
     Http404,
     HttpResponse,
 )
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.core import signing
 from django.shortcuts import render, redirect
 
+from accounts.models import MusicaEstatistica
+from musicas.models import Musica
+from .models import Musica
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .services import buscar_musica_por_codigo, buscar_musicas
-
 import mimetypes
 import os
 import re
+from django.db.models import F
+
 
 # Token válido por 5 minutos
 TOKEN_TTL = 300  # segundos
 
+# -----------------------------
+# pagina de acesso - home
+# -----------------------------
 
+
+from django.shortcuts import render
+from .models import Musica
+
+def home(request):
+    top3 = Musica.objects.order_by("-acessos", "-id")[:3]
+
+    # Gera um token por vídeo para permitir o stream (válido por alguns minutos)
+    for m in top3:
+        codigo = str(getattr(m, "codigo", "")).zfill(5)
+        m.token = signing.dumps(codigo, salt="video-stream")
+
+    return render(request, "musicas/home.html", {"top3": top3})
 # -----------------------------
 # LISTA DE MÚSICAS
 # -----------------------------
+@login_required
 def lista_musicas(request):
     codigo = request.GET.get("codigo")
     artista = request.GET.get("artista")
@@ -64,6 +89,8 @@ def lista_musicas(request):
 # -----------------------------
 # DETALHE DA MÚSICA
 # -----------------------------
+@ensure_csrf_cookie
+@login_required
 def detalhe_musica(request, codigo):
     codigo = str(codigo).zfill(5)
     musica = buscar_musica_por_codigo(codigo)
@@ -94,9 +121,23 @@ def detalhe_musica(request, codigo):
 # -----------------------------
 # MODO PALCO (NOVA VIEW HTML)
 # -----------------------------
+@login_required
 def modo_palco(request, codigo):
     codigo = str(codigo).zfill(5)
     musica = buscar_musica_por_codigo(codigo)
+
+    estat, created = MusicaEstatistica.objects.get_or_create(
+    codigo=musica["codigo"],
+    defaults={
+        "nome": musica["nome"],
+        "artista": musica["artista"],
+    }
+    )
+
+    estat.acessos += 1
+    estat.save()
+
+
 
     if not musica:
         raise Http404("Música não encontrada")
@@ -117,10 +158,9 @@ def modo_palco(request, codigo):
 
 
 # -----------------------------
-# STREAM DE VÍDEO (NÃO MEXER)
+# STREAM DE VÍDEO (SEM CONTAR PLAY)
 # -----------------------------
 def stream_video(request, codigo):
-
     token = request.GET.get("token")
     if not token:
         return JsonResponse({"error": "Token não fornecido"}, status=403)
@@ -132,14 +172,15 @@ def stream_video(request, codigo):
     except signing.BadSignature:
         return JsonResponse({"error": "Token inválido"}, status=403)
 
-    if str(codigo).zfill(5) != token_codigo:
+    codigo_norm = str(codigo).zfill(5)
+    if codigo_norm != token_codigo:
         return JsonResponse({"error": "Token não corresponde"}, status=403)
 
-    musica = buscar_musica_por_codigo(str(codigo).zfill(5))
-    if not musica:
+    musica_dict = buscar_musica_por_codigo(codigo_norm)
+    if not musica_dict:
         raise Http404("Música não encontrada")
 
-    path = os.path.join(settings.MEDIA_ROOT, musica["caminho_video"])
+    path = os.path.join(settings.MEDIA_ROOT, musica_dict["caminho_video"])
     if not os.path.exists(path):
         raise Http404("Vídeo não encontrado")
 
@@ -155,6 +196,12 @@ def stream_video(request, codigo):
         end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
         end = min(end, file_size - 1)
 
+        if start >= file_size:
+            # Range inválido
+            resp = HttpResponse(status=416)
+            resp["Content-Range"] = f"bytes */{file_size}"
+            return resp
+
         length = end - start + 1
 
         with open(path, "rb") as f:
@@ -166,11 +213,39 @@ def stream_video(request, codigo):
         response["Accept-Ranges"] = "bytes"
         response["Content-Length"] = str(length)
     else:
-        response = StreamingHttpResponse(
-            open(path, "rb"),
-            content_type=content_type
-        )
+        response = StreamingHttpResponse(open(path, "rb"), content_type=content_type)
         response["Content-Length"] = str(file_size)
         response["Accept-Ranges"] = "bytes"
 
     return response
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def registrar_play(request, codigo):
+    raw = str(codigo)
+    codigo_norm = raw.zfill(5)
+
+    session_key = f"played_{codigo_norm}"
+    WINDOW_SECONDS = 600  # 10 minutos
+
+    now_ts = int(dj_timezone.now().timestamp())
+
+    last_ts = request.session.get(session_key)
+    if last_ts is not None:
+        try:
+            if (now_ts - int(last_ts)) <= WINDOW_SECONDS:
+                return JsonResponse({"ok": True, "counted": False, "reason": "window"})
+        except Exception:
+            pass
+
+    updated = Musica.objects.filter(codigo__in=[raw, codigo_norm]).update(acessos=F("acessos") + 1)
+
+    if updated == 0:
+        # se seu model exigir nome/artista, me diga os campos obrigatórios que ajusto aqui
+        Musica.objects.create(codigo=codigo_norm, nome="", artista="", acessos=1)
+        updated = 1
+
+    request.session[session_key] = now_ts
+    return JsonResponse({"ok": True, "counted": True, "updated": updated, "codigo": codigo_norm})

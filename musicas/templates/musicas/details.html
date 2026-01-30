@@ -1,3 +1,4 @@
+<!-- details.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -145,9 +146,15 @@ pre.letra {
     </button>
 
     <div class="video-container">
-        <video id="video" controls playsinline preload="metadata">
-            <source src="{% url 'stream_video' musica.codigo %}?token={{ token }}" type="video/mp4">
+        <video id="video"
+            data-codigo="{{ musica.codigo }}"
+            data-play-url="{% url 'registrar_play' musica.codigo %}"
+            controls playsinline preload="metadata"
+            controlsList="nodownload noplaybackrate"
+            oncontextmenu="return false">
+        <source src="{% url 'stream_video' musica.codigo %}?token={{ token }}" type="video/mp4">
         </video>
+
     </div>
 
     {% if musica.letra %}
@@ -164,30 +171,58 @@ const palcoBtn = document.getElementById("palcoBtn");
 const video = document.getElementById("video");
 const isMobile = window.innerWidth < 768;
 
-palcoBtn.addEventListener("click", async () => {
+let playCounted = false;
 
-    if (isMobile) {
-        // MOBILE: Safari assume fullscreen nativo
-        video.play();
-        return;
+async function contarPlay() {
+  if (playCounted) return;
+
+  const playUrl = video.dataset.playUrl;
+
+  try {
+    const r = await fetch(playUrl, {
+      method: "POST",
+      credentials: "same-origin",
+    });
+
+    console.log("[registrar_play] status:", r.status);
+
+    // Se vier 302/HTML (login), isso aqui pode falhar; por isso try/catch
+    let data = null;
+    try { data = await r.json(); } catch(e) {}
+    console.log("[registrar_play] response:", data);
+
+    if (r.ok && data && data.ok) {
+      playCounted = true; // ✅ só marca como contado se o backend confirmar
+    } else {
+      console.error("[registrar_play] não contou");
     }
+  } catch (e) {
+    console.error("[registrar_play] erro:", e);
+  }
+}
 
-    // DESKTOP
-    document.body.classList.add("palco");
+video.addEventListener("play", contarPlay);
 
-    try {
-        await video.requestFullscreen();
-    } catch (e) {}
+// ===== MODO PALCO =====
+palcoBtn.addEventListener("click", async () => {
+  if (isMobile) {
+    await video.play();
+    return;
+  }
 
-    video.play();
+  document.body.classList.add("palco");
+  try { await video.requestFullscreen(); } catch (e) {}
+  await video.play();
 });
 
 document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement) {
-        document.body.classList.remove("palco");
-    }
+  if (!document.fullscreenElement) {
+    document.body.classList.remove("palco");
+  }
 });
 </script>
+
+
 
 </body>
 </html>
