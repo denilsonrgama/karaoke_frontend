@@ -164,6 +164,8 @@ API_MUSICAS_URL = config(
     default="http://localhost:8001/api/musicas/",
 )
 
+VIDEO_BASE_URL = config("VIDEO_BASE_URL", default="")
+
 
 # -----------------------
 # Sessões

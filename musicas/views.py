@@ -7,6 +7,7 @@ from django.http import (
     StreamingHttpResponse,
     Http404,
     HttpResponse,
+    HttpResponseRedirect,
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -21,6 +22,7 @@ from .services import buscar_musica_por_codigo, buscar_musicas
 import mimetypes
 import os
 import re
+from urllib.parse import quote
 from django.db.models import F
 
 
@@ -192,6 +194,12 @@ def stream_video(request, codigo):
     musica_dict = buscar_musica_por_codigo(codigo_norm)
     if not musica_dict:
         raise Http404("Música não encontrada")
+
+    video_base_url = getattr(settings, "VIDEO_BASE_URL", "").rstrip("/")
+    if video_base_url:
+        caminho_video = str(musica_dict["caminho_video"]).replace("\\", "/").lstrip("/")
+        video_url = f"{video_base_url}/{quote(caminho_video, safe='/')}"
+        return HttpResponseRedirect(video_url)
 
     path = os.path.join(settings.MEDIA_ROOT, musica_dict["caminho_video"])
     if not os.path.exists(path):
