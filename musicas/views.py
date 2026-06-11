@@ -38,12 +38,26 @@ from .models import Musica
 def home(request):
     top3 = Musica.objects.order_by("-acessos", "-id")[:3]
 
-    # Gera um token por vídeo para permitir o stream (válido por alguns minutos)
     for m in top3:
         codigo = str(getattr(m, "codigo", "")).zfill(5)
+
+        # token (mantido caso você use em outros pontos)
         m.token = signing.dumps(codigo, salt="video-stream")
 
-    return render(request, "musicas/home.html", {"top3": top3})
+        # thumbnail: /media/thumbs/01001.jpg
+        m.thumb_url = f"{settings.STATIC_URL}media/karaoke/{codigo}.jpg"
+
+
+
+    return render(
+        request,
+        "musicas/home.html",
+        {
+            "top3": top3,
+            "hide_nav": True,        # Home sem menu
+            "hide_container": True,  # Home sem container do base
+        },
+    )
 # -----------------------------
 # LISTA DE MÚSICAS
 # -----------------------------
@@ -126,21 +140,19 @@ def modo_palco(request, codigo):
     codigo = str(codigo).zfill(5)
     musica = buscar_musica_por_codigo(codigo)
 
-    estat, created = MusicaEstatistica.objects.get_or_create(
-    codigo=musica["codigo"],
-    defaults={
-        "nome": musica["nome"],
-        "artista": musica["artista"],
-    }
-    )
-
-    estat.acessos += 1
-    estat.save()
-
-
-
     if not musica:
         raise Http404("Música não encontrada")
+
+    # (opcional) estatística: só faz depois que musica existe
+    estat, created = MusicaEstatistica.objects.get_or_create(
+        codigo=musica["codigo"],
+        defaults={
+            "nome": musica.get("nome", ""),
+            "artista": musica.get("artista", ""),
+        }
+    )
+    estat.acessos += 1
+    estat.save()
 
     token = signing.dumps(codigo, salt="video-stream")
 
@@ -153,9 +165,10 @@ def modo_palco(request, codigo):
             "musica": musica,
             "token": token,
             "voltar_url": next_url,
+            "hide_nav": True,        # ✅ Palco sem menu
+            "hide_container": True,  # ✅ Palco fullscreen real
         }
     )
-
 
 # -----------------------------
 # STREAM DE VÍDEO (SEM CONTAR PLAY)
@@ -228,8 +241,7 @@ def registrar_play(request, codigo):
     codigo_norm = raw.zfill(5)
 
     session_key = f"played_{codigo_norm}"
-    WINDOW_SECONDS = 600  # 10 minutos
-
+    WINDOW_SECONDS = 600  # 10 min
     now_ts = int(dj_timezone.now().timestamp())
 
     last_ts = request.session.get(session_key)
@@ -240,12 +252,36 @@ def registrar_play(request, codigo):
         except Exception:
             pass
 
-    updated = Musica.objects.filter(codigo__in=[raw, codigo_norm]).update(acessos=F("acessos") + 1)
+    # pega metadados da fonte (se existir)
+    musica_dict = buscar_musica_por_codigo(codigo_norm) or {}
+    nome = musica_dict.get("nome") or ""
+    artista = musica_dict.get("artista") or ""
 
-    if updated == 0:
-        # se seu model exigir nome/artista, me diga os campos obrigatórios que ajusto aqui
-        Musica.objects.create(codigo=codigo_norm, nome="", artista="", acessos=1)
-        updated = 1
+    # tenta achar registro existente (aceita codigo "1001" e "01001")
+    obj = Musica.objects.filter(codigo__in=[raw, codigo_norm]).first()
+
+    if obj is None:
+        # cria já com metadados
+        obj = Musica.objects.create(
+            codigo=codigo_norm,
+            nome=nome,
+            artista=artista,
+            acessos=0,
+        )
+    else:
+        # se existir mas estiver vazio, preenche
+        updates = {}
+        if (not getattr(obj, "nome", "")) and nome:
+            updates["nome"] = nome
+        if (not getattr(obj, "artista", "")) and artista:
+            updates["artista"] = artista
+        if updates:
+            for k, v in updates.items():
+                setattr(obj, k, v)
+            obj.save(update_fields=list(updates.keys()))
+
+    # incrementa
+    Musica.objects.filter(pk=obj.pk).update(acessos=F("acessos") + 1)
 
     request.session[session_key] = now_ts
-    return JsonResponse({"ok": True, "counted": True, "updated": updated, "codigo": codigo_norm})
+    return JsonResponse({"ok": True, "counted": True})

@@ -1,86 +1,104 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Modo Palco</title>
+<!-- palco.html -->
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            margin: 0;
-            background: black;
-            color: white;
-            overflow: hidden;
-        }
+{% block title %}Modo Palco{% endblock %}
 
-        video {
-            width: 100vw;
-            height: 100vh;
-            object-fit: contain;
-            background: black;
-        }
-
-        .voltar {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 999;
-            padding: 10px 14px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-
-<button class="voltar" onclick="voltar()">⬅ Voltar</button>
-
-<script>
-function voltar() {
-    const voltarUrl = "{{ voltar_url|default:'' }}";
-
-    if (voltarUrl) {
-        window.location.href = voltarUrl;
-    } else {
-        window.location.href = "{% url 'lista_musicas' %}";
+{% block content %}
+<style>
+    body {
+        margin: 0;
+        background: black;
+        color: white;
+        overflow: hidden;
     }
-}
-</script>
 
+    .palco-wrap {
+        position: fixed;
+        inset: 0;
+        background: black;
+        z-index: 9999;
+    }
 
+    video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+        background: black;
+    }
 
-<video
-    id="video"
-    controls
-    controlsList="nodownload noplaybackrate"
-    oncontextmenu="return false;"
-    autoplay
-    playsinline
-    webkit-playsinline
-    preload="auto"
-    src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
->
-    Seu navegador não suporta vídeo.
-</video>
+    .voltar {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 10000;
+        padding: 10px 14px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+</style>
+
+<button class="voltar" id="voltarBtn">⬅ Voltar</button>
+
+<div class="palco-wrap">
+    <video
+        id="video"
+        data-codigo="{{ musica.codigo }}"
+        data-play-url="{% url 'registrar_play' musica.codigo %}"
+        controls
+        controlsList="nodownload noplaybackrate"
+        oncontextmenu="return false;"
+        autoplay
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
+    >
+        Seu navegador não suporta vídeo.
+    </video>
+</div>
 
 <script>
-function voltar() {
-    window.location.href = "{% url 'detalhe_musica' musica.codigo %}";
-}
-
-// iOS precisa de interação em alguns casos
-document.addEventListener("click", function () {
+(function () {
     const video = document.getElementById("video");
-    if (video.paused) {
-        video.play().catch(() => {});
-    }
-});
-</script>
+    const voltarBtn = document.getElementById("voltarBtn");
 
-</body>
-</html>
+    const voltarUrl = "{{ voltar_url|default:'' }}";
+    voltarBtn.addEventListener("click", () => {
+        if (voltarUrl) {
+            window.location.href = voltarUrl;
+        } else {
+            window.location.href = "{% url 'detalhe_musica' musica.codigo %}";
+        }
+    });
+
+    let playCounted = false;
+    video.addEventListener("play", async () => {
+        if (playCounted) return;
+
+        try {
+            const r = await fetch(video.dataset.playUrl, {
+                method: "POST",
+                credentials: "same-origin",
+            });
+
+            let data = null;
+            try { data = await r.json(); } catch(e) {}
+
+            if (r.ok && data && data.ok) {
+                playCounted = true;
+            }
+        } catch (e) {}
+    });
+
+    document.addEventListener("click", function () {
+        if (video && video.paused) {
+            video.play().catch(() => {});
+        }
+    }, { passive: true });
+})();
+</script>
+{% endblock %}

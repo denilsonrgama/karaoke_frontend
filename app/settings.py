@@ -1,4 +1,8 @@
+import os
 from pathlib import Path
+
+import dj_database_url
+from decouple import config
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -9,15 +13,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=$t@uobqb!o903h7-bz*1$!5(uxlg7_oxrre_#p8!l!44wud6+'
+SECRET_KEY = config(
+    "SECRET_KEY",
+    default="django-insecure-dev-only-change-me",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=True, cast=bool)
 
 ALLOWED_HOSTS = [
-    "karaoke.karaokedocowboy.art.br",
-    "localhost",
-    "127.0.0.1",
+    host.strip()
+    for host in config(
+        "ALLOWED_HOSTS",
+        default=".onrender.com,karaokedocowboy.art.br,www.karaokedocowboy.art.br,karaoke.karaokedocowboy.art.br,localhost,127.0.0.1",
+    ).split(",")
+    if host.strip()
 ]
 
 USE_X_FORWARDED_HOST = True
@@ -25,7 +35,12 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://karaoke.karaokedocowboy.art.br",
+    origin.strip()
+    for origin in config(
+        "CSRF_TRUSTED_ORIGINS",
+        default="https://karaokedocowboy.art.br,https://www.karaokedocowboy.art.br,https://karaoke.karaokedocowboy.art.br",
+    ).split(",")
+    if origin.strip()
 ]
 
 
@@ -45,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,10 +94,11 @@ ASGI_APPLICATION = 'app.asgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        ssl_require=not DEBUG and bool(os.getenv("DATABASE_URL")),
+    )
 }
 
 
@@ -117,13 +134,27 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+if not DEBUG:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 
 # ============================
 # API Karaoke (Backend)
 # ============================
-API_MUSICAS_URL = "http://localhost:8001/api/musicas/"
+API_MUSICAS_URL = config(
+    "API_MUSICAS_URL",
+    default="http://localhost:8001/api/musicas/",
+)
 
 
 # -----------------------
@@ -131,14 +162,14 @@ API_MUSICAS_URL = "http://localhost:8001/api/musicas/"
 # -----------------------
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # destrói sessão ao fechar navegador
 SESSION_COOKIE_AGE = 3600  # opcional: tempo máximo de sessão
-SESSION_COOKIE_SECURE = True  # só em HTTPS
-CSRF_COOKIE_SECURE = True     # só em HTTPS
+SESSION_COOKIE_SECURE = not DEBUG  # só em HTTPS
+CSRF_COOKIE_SECURE = not DEBUG     # só em HTTPS
 #CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.dev']  # ajuste conforme necessário
 
 
 #accounts/models.py
 AUTH_USER_MODEL = "accounts.User"
-LOGIN_URL = "login"
+LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"  # opcional (ou "login")
 
@@ -148,6 +179,5 @@ DEFAULT_FROM_EMAIL = "webmaster@localhost"
 
 
 
-# Caminho para os vídeos de karaoke
-MEDIA_ROOT = Path(r'K:\Musicas\Karaoke')
+MEDIA_ROOT = Path(config("MEDIA_ROOT", default=r"K:\Musicas\Karaoke"))
 MEDIA_URL = '/media/'
