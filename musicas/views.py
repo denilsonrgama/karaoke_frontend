@@ -39,6 +39,7 @@ from .models import Musica
 
 def home(request):
     top3 = Musica.objects.order_by("-acessos", "-id")[:3]
+    video_base_url = getattr(settings, "VIDEO_BASE_URL", "").rstrip("/")
 
     for m in top3:
         codigo = str(getattr(m, "codigo", "")).zfill(5)
@@ -46,8 +47,10 @@ def home(request):
         # token (mantido caso você use em outros pontos)
         m.token = signing.dumps(codigo, salt="video-stream")
 
-        # thumbnail: /media/thumbs/01001.jpg
-        m.thumb_url = f"{settings.STATIC_URL}media/karaoke/{codigo}.jpg"
+        if video_base_url:
+            m.thumb_url = f"{video_base_url}/thumbs/{quote(codigo)}.jpg"
+        else:
+            m.thumb_url = f"{settings.STATIC_URL}media/karaoke/{codigo}.jpg"
 
 
 
