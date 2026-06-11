@@ -40,6 +40,11 @@ from .models import Musica
 def home(request):
     top3 = Musica.objects.order_by("-acessos", "-id")[:3]
     video_base_url = getattr(settings, "VIDEO_BASE_URL", "").rstrip("/")
+    hero_background_url = (
+        f"{video_base_url}/thumbs/karaoke-background.jpg"
+        if video_base_url
+        else f"{settings.STATIC_URL}media/karaoke/karaoke-background.jpg"
+    )
 
     for m in top3:
         codigo = str(getattr(m, "codigo", "")).zfill(5)
@@ -59,6 +64,7 @@ def home(request):
         "musicas/home.html",
         {
             "top3": top3,
+            "hero_background_url": hero_background_url,
             "hide_nav": True,        # Home sem menu
             "hide_container": True,  # Home sem container do base
         },

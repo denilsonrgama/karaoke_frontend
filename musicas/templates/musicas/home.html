@@ -38,8 +38,8 @@ body{
 
 .hero{
   background:
-    radial-gradient(circle at 20% 20%,rgba(255,255,255,.18),transparent 28%),
     linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),
+    var(--hero-bg) center/cover no-repeat,
     linear-gradient(135deg,#4d2610 0%,#8b4513 45%,#d98c3f 100%);
   color:#fff;
   text-align:center;
@@ -145,7 +145,7 @@ body{
 <div class="page-wrap">
 
   <!-- HERO -->
-  <div class="hero">
+  <div class="hero" style="--hero-bg: url('{{ hero_background_url }}');">
     <h1>🤠 Karaokê do Cowboy</h1>
     <p>As 3 mais pedidas do saloon — bora cantar!</p>
 
