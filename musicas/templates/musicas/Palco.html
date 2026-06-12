@@ -115,12 +115,18 @@
     const toneButtons = document.querySelectorAll(".tone-btn");
     const toneLabel = document.getElementById("toneLabel");
     const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
+    let mediaOffset = 0;
 
-    function toneUrl(tone) {
+    function absoluteTime() {
+        return mediaOffset + (Number.isFinite(video.currentTime) ? video.currentTime : 0);
+    }
+
+    function toneUrl(tone, startAt = 0) {
         if (tone === 0) {
             return video.dataset.originalSrc;
         }
-        return video.dataset.toneSrc.replace("TONE", String(tone));
+        const separator = video.dataset.toneSrc.includes("?") ? "&" : "?";
+        return `${video.dataset.toneSrc.replace("TONE", String(tone))}${separator}start=${Math.max(startAt, 0).toFixed(2)}`;
     }
 
     function renderTone(tone) {
@@ -138,16 +144,24 @@
     }
 
     function applyTone(tone, autoplay = false) {
+        const startAt = absoluteTime();
         localStorage.setItem(toneStorageKey, String(tone));
         renderTone(tone);
 
-        const nextSrc = toneUrl(tone);
+        const nextSrc = toneUrl(tone, startAt);
         if (video.currentSrc.endsWith(nextSrc) || video.src.endsWith(nextSrc)) {
             return;
         }
 
         video.src = nextSrc;
+        mediaOffset = tone === 0 ? 0 : startAt;
         video.load();
+
+        if (tone === 0 && startAt > 0) {
+            video.addEventListener("loadedmetadata", () => {
+                video.currentTime = startAt;
+            }, { once: true });
+        }
 
         if (autoplay) {
             video.play().catch(() => {});
