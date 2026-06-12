@@ -188,7 +188,7 @@ def modo_palco(request, codigo):
 
     return render(
         request,
-        "musicas/palco.html",
+        "musicas/Palco.html",
         {
             "musica": musica,
             "token": token,

@@ -96,6 +96,41 @@ pre.letra {
     padding: 10px;
 }
 
+.tone-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: rgba(255, 248, 220, .9);
+    border: 2px solid #8b4513;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 1rem;
+}
+
+.tone-controls button {
+    min-width: 104px;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: #8b4513;
+    color: #ffd700;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.tone-controls button:hover {
+    background: #5a2d0c;
+}
+
+.tone-label {
+    min-width: 120px;
+    text-align: center;
+    color: #5a2d0c;
+    font-weight: bold;
+}
+
 /* ===== DESKTOP MODO PALCO ===== */
 @media (min-width: 768px) {
     body.palco {
@@ -105,7 +140,8 @@ pre.letra {
     body.palco h1,
     body.palco .musica-card,
     body.palco .btn-back,
-    body.palco .btn-palco {
+    body.palco .btn-palco,
+    body.palco .tone-controls {
         display: none;
     }
 
@@ -145,6 +181,13 @@ pre.letra {
         </video>
     </div>
 
+    <div class="tone-controls" aria-label="Controle de tom">
+        <button type="button" id="toneDown">- Tom</button>
+        <span id="toneLabel" class="tone-label">Tom original</span>
+        <button type="button" id="toneUp">+ Tom</button>
+        <button type="button" id="toneReset">Resetar</button>
+    </div>
+
     {% if musica.letra %}
         <pre class="letra">{{ musica.letra }}</pre>
     {% endif %}
@@ -157,9 +200,47 @@ pre.letra {
 <script>
 const palcoBtn = document.getElementById("palcoBtn");
 const video = document.getElementById("video");
+const toneDown = document.getElementById("toneDown");
+const toneUp = document.getElementById("toneUp");
+const toneReset = document.getElementById("toneReset");
+const toneLabel = document.getElementById("toneLabel");
 const isMobile = window.innerWidth < 768;
 
 let playCounted = false;
+let semitones = 0;
+const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
+
+function setPitchPreservation(enabled) {
+  ["preservesPitch", "mozPreservesPitch", "webkitPreservesPitch"].forEach((prop) => {
+    if (prop in video) {
+      video[prop] = enabled;
+    }
+  });
+}
+
+function renderToneLabel() {
+  if (semitones === 0) {
+    toneLabel.textContent = "Tom original";
+    return;
+  }
+
+  const signal = semitones > 0 ? "+" : "";
+  toneLabel.textContent = `${signal}${semitones} tom${Math.abs(semitones) === 1 ? "" : "s"}`;
+}
+
+function applyTone(nextSemitones) {
+  semitones = Math.max(-6, Math.min(6, nextSemitones));
+  setPitchPreservation(false);
+  video.playbackRate = Math.pow(2, semitones / 12);
+  localStorage.setItem(toneStorageKey, String(semitones));
+  renderToneLabel();
+}
+
+applyTone(Number(localStorage.getItem(toneStorageKey) || 0));
+
+toneDown.addEventListener("click", () => applyTone(semitones - 1));
+toneUp.addEventListener("click", () => applyTone(semitones + 1));
+toneReset.addEventListener("click", () => applyTone(0));
 
 video.addEventListener("play", async () => {
   if (playCounted) return;
