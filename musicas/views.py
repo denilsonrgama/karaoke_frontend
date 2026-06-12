@@ -27,6 +27,7 @@ import os
 import re
 import subprocess
 import tempfile
+import threading
 from urllib.parse import quote
 from django.db.models import F
 
@@ -34,6 +35,8 @@ from django.db.models import F
 # Token válido por 5 minutos
 TOKEN_TTL = 300  # segundos
 TONE_CACHE_MAX_BYTES = int(getattr(settings, "TONE_CACHE_MAX_BYTES", 2 * 1024 * 1024 * 1024))
+TONE_JOBS = {}
+TONE_JOBS_LOCK = threading.Lock()
 
 
 def safe_next_url(request, fallback_url):
@@ -212,6 +215,27 @@ def build_pitch_shift_file(source, output_path, semitones):
     os.replace(part_path, output_path)
     prune_tone_cache()
     return output_path
+
+
+def start_tone_job(job_key, source, output_path, semitones):
+    def run():
+        try:
+            build_pitch_shift_file(source, output_path, semitones)
+            status = {"status": "ready"}
+        except RuntimeError as exc:
+            status = {"status": "error", "error": str(exc)}
+
+        with TONE_JOBS_LOCK:
+            TONE_JOBS[job_key] = status
+
+    with TONE_JOBS_LOCK:
+        current = TONE_JOBS.get(job_key)
+        if current and current.get("status") == "pending":
+            return
+        TONE_JOBS[job_key] = {"status": "pending"}
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
 
 
 # -----------------------------
@@ -491,14 +515,34 @@ def prepare_video_tom(request, codigo, tom):
         raise Http404("Video nao encontrado")
 
     output_path = tone_cache_path(codigo_norm, semitones)
-    try:
-        build_pitch_shift_file(source, output_path, semitones)
-    except RuntimeError as exc:
-        return JsonResponse({"error": str(exc)}, status=503)
+    job_key = f"{codigo_norm}:{semitones}"
+    if os.path.exists(output_path):
+        return JsonResponse({
+            "ok": True,
+            "status": "ready",
+            "url": f"{reverse('stream_video_tom', kwargs={'codigo': codigo_norm, 'tom': semitones})}?token={fresh_token}",
+        })
+
+    with TONE_JOBS_LOCK:
+        job = TONE_JOBS.get(job_key)
+
+    if job and job.get("status") == "error":
+        with TONE_JOBS_LOCK:
+            TONE_JOBS.pop(job_key, None)
+        return JsonResponse({"ok": False, "status": "error", "error": job.get("error", "Falha ao preparar tom")}, status=503)
+
+    if job and job.get("status") == "ready":
+        return JsonResponse({
+            "ok": True,
+            "status": "ready",
+            "url": f"{reverse('stream_video_tom', kwargs={'codigo': codigo_norm, 'tom': semitones})}?token={fresh_token}",
+        })
+
+    start_tone_job(job_key, source, output_path, semitones)
 
     return JsonResponse({
         "ok": True,
-        "url": f"{reverse('stream_video_tom', kwargs={'codigo': codigo_norm, 'tom': semitones})}?token={fresh_token}",
+        "status": "pending",
     })
 
 

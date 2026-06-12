@@ -131,6 +131,33 @@
         return video.dataset.tonePrepareSrc.replace("TONE", String(tone));
     }
 
+    function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function waitForPreparedTone(tone) {
+        for (let attempt = 0; attempt < 90; attempt += 1) {
+            const response = await fetch(prepareToneUrl(tone), { credentials: "same-origin" });
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+                throw new Error("Sessao expirada. Recarregue a pagina.");
+            }
+
+            const data = await response.json();
+            if (!response.ok || data.ok === false) {
+                throw new Error(data.error || "Falha ao preparar tom");
+            }
+            if (data.status === "ready" && data.url) {
+                return data.url;
+            }
+
+            toneLabel.textContent = `Preparando ${tone > 0 ? "+" : ""}${tone}...`;
+            await sleep(3000);
+        }
+
+        throw new Error("Preparacao demorou demais. Tente novamente.");
+    }
+
     function renderTone(tone) {
         toneButtons.forEach((button) => {
             button.classList.toggle("active", Number(button.dataset.tone) === tone);
@@ -161,17 +188,8 @@
         if (tone !== 0) {
             if (!preparedToneUrls[tone]) {
                 try {
-                    const response = await fetch(prepareToneUrl(tone), { credentials: "same-origin" });
-                    const contentType = response.headers.get("content-type") || "";
-                    if (!contentType.includes("application/json")) {
-                        throw new Error("Sessao expirada. Recarregue a pagina.");
-                    }
-                    const data = await response.json();
-                    if (!response.ok || !data.ok || !data.url) {
-                        throw new Error(data.error || "Falha ao preparar tom");
-                    }
-                    preparedToneUrls[tone] = data.url;
-                    nextSrc = data.url;
+                    nextSrc = await waitForPreparedTone(tone);
+                    preparedToneUrls[tone] = nextSrc;
                 } catch (error) {
                     console.error("[tom] erro:", error);
                     renderTone(currentTone);
