@@ -13,3 +13,18 @@ escolha e preferência do cantor
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
+```
+
+## Variaveis de email no Render
+
+Para a rotina "Esqueci minha senha" enviar email de verdade em producao, configure:
+
+```env
+EMAIL_HOST=smtp.seu-provedor.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=usuario-do-smtp
+EMAIL_HOST_PASSWORD=senha-ou-app-password
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+DEFAULT_FROM_EMAIL=Karaoke do Cowboy <no-reply@karaokedocowboy.art.br>
+```
