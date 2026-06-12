@@ -132,6 +132,38 @@ pre.letra {
     font-weight: bold;
 }
 
+.tone-progress {
+    display: none;
+    width: 100%;
+    max-width: 520px;
+    height: 12px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e7c99a;
+    border: 1px solid #8b4513;
+}
+
+.tone-progress.active {
+    display: block;
+}
+
+.tone-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #198754, #ffd700);
+    transition: width .35s ease;
+}
+
+.tone-cancel {
+    display: none;
+}
+
+.tone-cancel.active {
+    display: inline-block;
+    background: #b02a37;
+    color: #fff;
+}
+
 /* ===== DESKTOP MODO PALCO ===== */
 @media (min-width: 768px) {
     body.palco {
@@ -192,6 +224,10 @@ pre.letra {
         <button type="button" class="tone-btn" data-tone="1">+1</button>
         <button type="button" class="tone-btn" data-tone="2">+2</button>
         <span id="toneLabel" class="tone-label">Tom original</span>
+        <div id="toneProgress" class="tone-progress" aria-hidden="true">
+            <div id="toneProgressBar" class="tone-progress-bar"></div>
+        </div>
+        <button type="button" id="toneCancel" class="tone-cancel">Cancelar</button>
     </div>
 
     {% if musica.letra %}
@@ -208,11 +244,15 @@ const palcoBtn = document.getElementById("palcoBtn");
 const video = document.getElementById("video");
 const toneButtons = document.querySelectorAll(".tone-btn");
 const toneLabel = document.getElementById("toneLabel");
+const toneProgress = document.getElementById("toneProgress");
+const toneProgressBar = document.getElementById("toneProgressBar");
+const toneCancel = document.getElementById("toneCancel");
 const isMobile = window.innerWidth < 768;
 
 let playCounted = false;
 let currentTone = 0;
 let isPreparingTone = false;
+let cancelToneRequest = false;
 const preparedToneUrls = {};
 const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
 
@@ -231,8 +271,24 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function setToneProgress(percent) {
+  toneProgress.classList.toggle("active", percent > 0 && percent < 100);
+  toneProgressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+}
+
+function setToneControlsPreparing(preparing) {
+  isPreparingTone = preparing;
+  toneButtons.forEach((button) => { button.disabled = preparing; });
+  toneCancel.classList.toggle("active", preparing);
+}
+
 async function waitForPreparedTone(tone) {
   for (let attempt = 0; attempt < 90; attempt += 1) {
+    if (cancelToneRequest) {
+      throw new Error("cancelado");
+    }
+
+    setToneProgress(Math.min(95, 8 + attempt * 3));
     const response = await fetch(prepareToneUrl(tone), { credentials: "same-origin" });
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
@@ -244,6 +300,7 @@ async function waitForPreparedTone(tone) {
       throw new Error(data.error || "Falha ao preparar tom");
     }
     if (data.status === "ready" && data.url) {
+      setToneProgress(100);
       return data.url;
     }
 
@@ -276,8 +333,9 @@ async function applyTone(tone, autoplay = false) {
 
   video.pause();
   video.currentTime = 0;
-  isPreparingTone = true;
-  toneButtons.forEach((button) => { button.disabled = true; });
+  cancelToneRequest = false;
+  setToneControlsPreparing(true);
+  setToneProgress(tone === 0 ? 0 : 5);
   toneLabel.textContent = tone === 0 ? "Voltando..." : `Preparando ${tone > 0 ? "+" : ""}${tone}...`;
 
   let nextSrc = preparedToneUrls[tone] || toneUrl(tone);
@@ -287,11 +345,22 @@ async function applyTone(tone, autoplay = false) {
         nextSrc = await waitForPreparedTone(tone);
         preparedToneUrls[tone] = nextSrc;
       } catch (error) {
+        if (error.message === "cancelado") {
+          video.src = video.dataset.originalSrc;
+          video.load();
+          currentTone = 0;
+          localStorage.removeItem(toneStorageKey);
+          renderTone(0);
+          toneLabel.textContent = "Tom original";
+          setToneProgress(0);
+          setToneControlsPreparing(false);
+          return;
+        }
         console.error("[tom] erro:", error);
         renderTone(currentTone);
         toneLabel.textContent = error.message || "Erro ao preparar tom";
-        isPreparingTone = false;
-        toneButtons.forEach((button) => { button.disabled = false; });
+        setToneProgress(0);
+        setToneControlsPreparing(false);
         return;
       }
     }
@@ -302,8 +371,8 @@ async function applyTone(tone, autoplay = false) {
     currentTone = tone;
     localStorage.setItem(toneStorageKey, String(tone));
     renderTone(tone);
-    isPreparingTone = false;
-    toneButtons.forEach((button) => { button.disabled = false; });
+    setToneProgress(0);
+    setToneControlsPreparing(false);
     return;
   }
 
@@ -315,8 +384,8 @@ async function applyTone(tone, autoplay = false) {
   toneLabel.textContent = tone === 0
     ? "Tom original pronto. Aperte play."
     : `Tom ${tone > 0 ? "+" : ""}${tone} pronto. Aperte play.`;
-  isPreparingTone = false;
-  toneButtons.forEach((button) => { button.disabled = false; });
+  setToneProgress(0);
+  setToneControlsPreparing(false);
 
   if (autoplay) {
     video.play().catch(() => {});
@@ -331,6 +400,19 @@ toneButtons.forEach((button) => {
     const nextTone = Number(button.dataset.tone);
     applyTone(nextTone, !video.paused);
   });
+});
+
+toneCancel.addEventListener("click", () => {
+  cancelToneRequest = true;
+  video.pause();
+  video.src = video.dataset.originalSrc;
+  video.load();
+  currentTone = 0;
+  localStorage.removeItem(toneStorageKey);
+  renderTone(0);
+  toneLabel.textContent = "Tom original";
+  setToneProgress(0);
+  setToneControlsPreparing(false);
 });
 
 video.addEventListener("play", async () => {
