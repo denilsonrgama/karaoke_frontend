@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Liberar acesso{% endblock %}
+
+{% block content %}
+<style>
+.payment-shell {
+  max-width: 760px;
+  margin: 0 auto 48px;
+  background: #fff;
+  border: 1px solid rgba(90,45,12,.18);
+  border-radius: 8px;
+  padding: 22px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+
+.payment-shell h1 {
+  color: #5a2d0c;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.pix-code {
+  min-height: 120px;
+  font-family: monospace;
+  font-size: .9rem;
+  resize: vertical;
+}
+
+.qr-box {
+  text-align: center;
+  margin: 18px 0;
+}
+
+.qr-box img {
+  width: min(280px, 100%);
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+</style>
+
+<div class="payment-shell">
+  <h1>Liberar acesso</h1>
+  <p>
+    Contribua com <strong>R$ {{ site_config.contribution_amount }}</strong> e libere o karaoke por
+    <strong>{{ site_config.paid_access_hours }} horas</strong>.
+  </p>
+
+  {% if request.user.access_expires_at %}
+    <div class="alert alert-success">
+      Seu acesso pago esta liberado ate {{ request.user.access_expires_at|date:"d/m/Y H:i" }}.
+    </div>
+  {% endif %}
+
+  {% if payment and payment.qr_code %}
+    <div class="alert alert-info" id="paymentStatus">
+      Pagamento aguardando Pix. Assim que for aprovado, seu acesso sera liberado automaticamente.
+    </div>
+
+    {% if payment.qr_code_base64 %}
+      <div class="qr-box">
+        <img alt="QR Code Pix" src="data:image/png;base64,{{ payment.qr_code_base64 }}">
+      </div>
+    {% endif %}
+
+    <label class="form-label fw-bold" for="pixCode">Pix copia e cola</label>
+    <textarea id="pixCode" class="form-control pix-code" readonly>{{ payment.qr_code }}</textarea>
+    <button type="button" class="btn btn-outline-primary mt-2" id="copyPix">Copiar codigo Pix</button>
+
+    {% if payment.ticket_url %}
+      <a class="btn btn-outline-secondary mt-2" href="{{ payment.ticket_url }}" target="_blank" rel="noopener">
+        Abrir no Mercado Pago
+      </a>
+    {% endif %}
+  {% else %}
+    <form method="post" action="{% url 'payments:create_payment' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success btn-lg">Gerar Pix</button>
+    </form>
+  {% endif %}
+
+  <a class="btn btn-link mt-3" href="{% url 'lista_musicas' %}">Voltar para lista</a>
+</div>
+
+{% if payment %}
+<script>
+const statusBox = document.getElementById("paymentStatus");
+const copyButton = document.getElementById("copyPix");
+const pixCode = document.getElementById("pixCode");
+
+if (copyButton && pixCode) {
+  copyButton.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(pixCode.value);
+    copyButton.textContent = "Copiado";
+    setTimeout(() => { copyButton.textContent = "Copiar codigo Pix"; }, 1800);
+  });
+}
+
+async function checkPaymentStatus() {
+  try {
+    const response = await fetch("{% url 'payments:payment_status' payment.id %}", {
+      credentials: "same-origin",
+    });
+    const data = await response.json();
+    if (data.approved) {
+      if (statusBox) {
+        statusBox.className = "alert alert-success";
+        statusBox.textContent = "Pagamento aprovado. Acesso liberado!";
+      }
+      setTimeout(() => { window.location.href = "{% url 'lista_musicas' %}"; }, 1500);
+      return;
+    }
+  } catch (e) {}
+  setTimeout(checkPaymentStatus, 5000);
+}
+
+checkPaymentStatus();
+</script>
+{% endif %}
+{% endblock %}

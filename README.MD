@@ -36,3 +36,18 @@ O limite de musicas iniciais para usuarios cadastrados pode ser ajustado no Rend
 ```env
 FREE_SONG_LIMIT=2
 ```
+
+## Mercado Pago Pix
+
+Configure no Render:
+
+```env
+MERCADOPAGO_ACCESS_TOKEN=APP_USR...
+MERCADOPAGO_WEBHOOK_SECRET=segredo_configurado_no_webhook
+```
+
+No Mercado Pago, cadastre o webhook:
+
+```text
+https://seu-dominio/pagamento/mercadopago/webhook/
+```

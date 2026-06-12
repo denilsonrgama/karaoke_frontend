@@ -225,7 +225,7 @@ pre.letra {
         <div class="alert alert-warning text-center" style="font-weight: 700;">
             Seu cadastro inicial permite cantar {{ song_limit }} musicas.
             Restam {{ songs_remaining }}.
-            Para continuar depois disso, conclua a contribuicao e aguarde a liberacao do administrador.
+            Para continuar depois disso, faca a contribuicao via Pix.
         </div>
     {% endif %}
 
@@ -469,7 +469,7 @@ video.addEventListener("play", async () => {
 
     if (data && data.requires_release) {
       video.pause();
-      alert(data.message || "Acesso aguardando liberacao.");
+      window.location.href = data.payment_url || "{% url 'payments:payment_page' %}";
     } else if (r.ok && data && data.ok) {
       playCounted = true;
     } else {

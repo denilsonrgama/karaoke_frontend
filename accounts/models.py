@@ -1,4 +1,6 @@
 #accounts/models.py
+from decimal import Decimal
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
@@ -58,6 +60,7 @@ class User(AbstractUser):
     sex = models.CharField("Sexo", max_length=1, choices=SEX_CHOICES)
     song_limit = models.PositiveIntegerField("Limite inicial de musicas", default=2)
     access_released = models.BooleanField("Acesso liberado pelo admin", default=False)
+    access_expires_at = models.DateTimeField("Acesso pago expira em", null=True, blank=True)
 
     musical_genre = models.ManyToManyField(
     MusicalGenre,
@@ -113,6 +116,8 @@ class SiteConfiguration(models.Model):
     )
     allow_registration = models.BooleanField(default=True)
     maintenance_message = models.CharField(max_length=220, blank=True)
+    contribution_amount = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("10.00"))
+    paid_access_hours = models.PositiveIntegerField(default=4)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

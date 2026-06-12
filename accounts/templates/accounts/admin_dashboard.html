@@ -181,6 +181,18 @@
           {{ form.maintenance_message.errors }}
         </div>
 
+        <div class="form-row">
+          <label for="{{ form.contribution_amount.id_for_label }}">Valor da contribuicao Pix</label>
+          {{ form.contribution_amount }}
+          {{ form.contribution_amount.errors }}
+        </div>
+
+        <div class="form-row">
+          <label for="{{ form.paid_access_hours.id_for_label }}">Horas liberadas por pagamento</label>
+          {{ form.paid_access_hours }}
+          {{ form.paid_access_hours.errors }}
+        </div>
+
         <div class="form-check mb-3">
           {{ form.allow_registration }}
           <label class="form-check-label" for="{{ form.allow_registration.id_for_label }}">

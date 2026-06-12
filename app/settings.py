@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "musicas",
     "accounts",
+    "payments",
 ]
 
 MIDDLEWARE = [
@@ -166,6 +167,8 @@ API_MUSICAS_URL = config(
 
 VIDEO_BASE_URL = config("VIDEO_BASE_URL", default="")
 FREE_SONG_LIMIT = config("FREE_SONG_LIMIT", default=2, cast=int)
+MERCADOPAGO_ACCESS_TOKEN = config("MERCADOPAGO_ACCESS_TOKEN", default="")
+MERCADOPAGO_WEBHOOK_SECRET = config("MERCADOPAGO_WEBHOOK_SECRET", default="")
 
 
 # -----------------------

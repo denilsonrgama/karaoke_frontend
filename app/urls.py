@@ -20,6 +20,7 @@ urlpatterns = [
     # APPS
     path("musicas/", include("musicas.urls")),
     path("accounts/", include(("accounts.urls", "accounts"), namespace="accounts")),
+    path("pagamento/", include("payments.urls")),
 
     # AUTH
     path("accounts/login/", CustomLoginView.as_view(), name="login"),

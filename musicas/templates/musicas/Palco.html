@@ -373,7 +373,7 @@
 
             if (data && data.requires_release) {
                 video.pause();
-                alert(data.message || "Acesso aguardando liberacao.");
+                window.location.href = data.payment_url || "{% url 'payments:payment_page' %}";
             } else if (r.ok && data && data.ok) {
                 playCounted = true;
             }

@@ -93,9 +93,9 @@
             Seu cadastro inicial permite cantar {{ song_limit }} musicas.
             Restam {{ songs_remaining }}.
             {% if songs_remaining == 0 %}
-                Para continuar, conclua a contribuicao e aguarde a liberacao do administrador.
+                <a href="{% url 'payments:payment_page' %}" class="alert-link">Faca a contribuicao via Pix para continuar.</a>
             {% else %}
-                Depois disso, sera necessario concluir a contribuicao para liberar o acesso.
+                Depois disso, sera necessario contribuir via Pix para liberar mais tempo.
             {% endif %}
         </div>
     {% endif %}

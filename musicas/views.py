@@ -46,7 +46,9 @@ def user_song_limit(user):
 
 
 def is_user_released(user):
-    return bool(user.is_staff or user.is_superuser or getattr(user, "access_released", False))
+    paid_until = getattr(user, "access_expires_at", None)
+    has_paid_access = bool(paid_until and paid_until > dj_timezone.now())
+    return bool(user.is_staff or user.is_superuser or getattr(user, "access_released", False) or has_paid_access)
 
 
 def user_usage_context(user):
@@ -74,7 +76,7 @@ def user_can_access_music(user, codigo):
 def limit_reached_response(request, json_response=False):
     message = (
         "Voce ja usou suas musicas iniciais. "
-        "Para continuar cantando, conclua a contribuicao e aguarde a liberacao do administrador."
+        "Para continuar cantando, faca a contribuicao via Pix."
     )
     if json_response:
         return JsonResponse(
@@ -82,12 +84,13 @@ def limit_reached_response(request, json_response=False):
                 "ok": False,
                 "requires_release": True,
                 "message": message,
+                "payment_url": reverse("payments:payment_page"),
             },
             status=403,
         )
 
     messages.warning(request, message)
-    return redirect("lista_musicas")
+    return redirect("payments:payment_page")
 
 
 def ensure_music_access(request, codigo, json_response=False):
