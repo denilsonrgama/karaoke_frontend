@@ -255,6 +255,10 @@ async function applyTone(tone, autoplay = false) {
   if (tone !== 0) {
     try {
       const response = await fetch(prepareToneUrl(tone), { credentials: "same-origin" });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Sessao expirada. Recarregue a pagina.");
+      }
       const data = await response.json();
       if (!response.ok || !data.ok || !data.url) {
         throw new Error(data.error || "Falha ao preparar tom");
@@ -263,6 +267,7 @@ async function applyTone(tone, autoplay = false) {
     } catch (error) {
       console.error("[tom] erro:", error);
       renderTone(currentTone);
+      toneLabel.textContent = error.message || "Erro ao preparar tom";
       isPreparingTone = false;
       toneButtons.forEach((button) => { button.disabled = false; });
       return;

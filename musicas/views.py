@@ -464,11 +464,8 @@ def stream_video_tom(request, codigo, tom):
     return serve_video_file(request, output_path)
 
 
+@login_required
 def prepare_video_tom(request, codigo, tom):
-    token_error = validate_stream_token(request, codigo)
-    if token_error:
-        return token_error
-
     semitones = parse_tom(tom)
     if semitones is None:
         return JsonResponse({"error": "Tom invalido"}, status=400)
