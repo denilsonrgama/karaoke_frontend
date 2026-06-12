@@ -371,9 +371,9 @@
             let data = null;
             try { data = await r.json(); } catch(e) {}
 
-            if (data && data.requires_registration) {
+            if (data && data.requires_release) {
                 video.pause();
-                window.location.href = data.register_url || "{% url 'accounts:register' %}";
+                alert(data.message || "Acesso aguardando liberacao.");
             } else if (r.ok && data && data.ok) {
                 playCounted = true;
             }

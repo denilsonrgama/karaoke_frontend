@@ -1,5 +1,7 @@
 # karaoke_frontend/musicas/views.py
 from django.utils import timezone as dj_timezone
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import (
     JsonResponse,
@@ -15,17 +17,15 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from accounts.models import GuestPlay, GuestSession, MusicaEstatistica, SiteConfiguration
+from accounts.models import MusicaEstatistica, SiteConfiguration, UserPlay
 from musicas.models import Musica
 from .models import Musica
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .services import buscar_musica_por_codigo, buscar_musicas
-import hashlib
 import mimetypes
 import math
 import os
 import re
-import secrets
 import subprocess
 import tempfile
 import threading
@@ -38,150 +38,74 @@ TOKEN_TTL = 300  # segundos
 TONE_CACHE_MAX_BYTES = int(getattr(settings, "TONE_CACHE_MAX_BYTES", 2 * 1024 * 1024 * 1024))
 TONE_JOBS = {}
 TONE_JOBS_LOCK = threading.Lock()
-GUEST_COOKIE_NAME = "karaoke_guest"
-GUEST_COOKIE_SALT = "karaoke-guest-access"
-GUEST_LIMIT = int(getattr(settings, "GUEST_SONG_LIMIT", 2))
-GUEST_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+FREE_SONG_LIMIT = int(getattr(settings, "FREE_SONG_LIMIT", 2))
 
 
-def get_client_ip(request):
-    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR", "")
+def user_song_limit(user):
+    return int(getattr(user, "song_limit", None) or FREE_SONG_LIMIT)
 
 
-def guest_fingerprint_hash(request):
-    raw = "|".join([
-        get_client_ip(request),
-        request.META.get("HTTP_USER_AGENT", ""),
-        request.META.get("HTTP_ACCEPT_LANGUAGE", ""),
-    ])
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+def is_user_released(user):
+    return bool(user.is_staff or user.is_superuser or getattr(user, "access_released", False))
 
 
-def signed_guest_token(token):
-    return signing.dumps(token, salt=GUEST_COOKIE_SALT)
-
-
-def read_guest_token(request):
-    signed_token = request.COOKIES.get(GUEST_COOKIE_NAME)
-    if not signed_token:
-        return None
-
-    try:
-        return signing.loads(signed_token, salt=GUEST_COOKIE_SALT, max_age=GUEST_COOKIE_MAX_AGE)
-    except signing.BadSignature:
-        return None
-
-
-def get_or_create_guest(request):
-    token = read_guest_token(request)
-    fingerprint = guest_fingerprint_hash(request)
-
-    if token:
-        guest = GuestSession.objects.filter(token=token).first()
-        if guest:
-            if guest.fingerprint_hash != fingerprint:
-                guest.fingerprint_hash = fingerprint
-                guest.save(update_fields=["fingerprint_hash", "last_seen"])
-            return guest, False
-
-    guest = GuestSession.objects.filter(fingerprint_hash=fingerprint).order_by("-last_seen").first()
-    if guest:
-        guest.save(update_fields=["last_seen"])
-        return guest, True
-
-    guest = GuestSession.objects.create(
-        token=secrets.token_urlsafe(32),
-        fingerprint_hash=fingerprint,
-    )
-    return guest, True
-
-
-def set_guest_cookie(response, guest):
-    response.set_cookie(
-        GUEST_COOKIE_NAME,
-        signed_guest_token(guest.token),
-        max_age=GUEST_COOKIE_MAX_AGE,
-        httponly=True,
-        secure=not settings.DEBUG,
-        samesite="Lax",
-    )
-    return response
-
-
-def guest_usage_context(request, guest=None):
-    if request.user.is_authenticated:
-        return {
-            "is_guest_access": False,
-            "guest_limit": GUEST_LIMIT,
-            "guest_used": 0,
-            "guest_remaining": GUEST_LIMIT,
-        }
-
-    if guest is None:
-        guest, _ = get_or_create_guest(request)
-
-    used = guest.plays.count()
+def user_usage_context(user):
+    used = user.song_plays.count()
+    limit = user_song_limit(user)
     return {
-        "is_guest_access": True,
-        "guest_limit": GUEST_LIMIT,
-        "guest_used": used,
-        "guest_remaining": max(GUEST_LIMIT - used, 0),
+        "access_released": is_user_released(user),
+        "song_limit": limit,
+        "songs_used": used,
+        "songs_remaining": max(limit - used, 0),
     }
 
 
-def guest_can_access_music(guest, codigo):
-    codigo_norm = str(codigo).zfill(5)
-    if guest.plays.filter(codigo=codigo_norm).exists():
+def user_can_access_music(user, codigo):
+    if is_user_released(user):
         return True
-    return guest.plays.count() < GUEST_LIMIT
+
+    codigo_norm = str(codigo).zfill(5)
+    if user.song_plays.filter(codigo=codigo_norm).exists():
+        return True
+
+    return user.song_plays.count() < user_song_limit(user)
 
 
-def guest_register_redirect(request):
-    register_url = reverse("accounts:register")
-    next_url = quote(request.get_full_path(), safe="")
-    return redirect(f"{register_url}?next={next_url}")
+def limit_reached_response(request, json_response=False):
+    message = (
+        "Voce ja usou suas musicas iniciais. "
+        "Para continuar cantando, conclua a contribuicao e aguarde a liberacao do administrador."
+    )
+    if json_response:
+        return JsonResponse(
+            {
+                "ok": False,
+                "requires_release": True,
+                "message": message,
+            },
+            status=403,
+        )
+
+    messages.warning(request, message)
+    return redirect("lista_musicas")
 
 
 def ensure_music_access(request, codigo, json_response=False):
-    if request.user.is_authenticated:
-        return None, None, False
-
-    guest, should_set_cookie = get_or_create_guest(request)
-    if guest_can_access_music(guest, codigo):
-        return guest, None, should_set_cookie
-
-    if json_response:
-        return guest, JsonResponse(
-            {
-                "ok": False,
-                "requires_registration": True,
-                "message": "Limite de convidado atingido. Crie sua conta para continuar cantando.",
-                "register_url": reverse("accounts:register"),
-            },
-            status=403,
-        ), should_set_cookie
-
-    return guest, guest_register_redirect(request), should_set_cookie
-
-
-def mark_guest_play(request, codigo, musica_dict):
-    if request.user.is_authenticated:
+    if user_can_access_music(request.user, codigo):
         return None
+    return limit_reached_response(request, json_response=json_response)
 
-    guest, _ = get_or_create_guest(request)
+
+def mark_user_play(request, codigo, musica_dict):
     codigo_norm = str(codigo).zfill(5)
-    play, created = GuestPlay.objects.get_or_create(
-        guest=guest,
+    return UserPlay.objects.get_or_create(
+        user=request.user,
         codigo=codigo_norm,
         defaults={
             "nome": musica_dict.get("nome") or "",
             "artista": musica_dict.get("artista") or "",
         },
     )
-    return play, created
 
 
 def safe_next_url(request, fallback_url):
@@ -428,12 +352,8 @@ def home(request):
 # -----------------------------
 # LISTA DE MÚSICAS
 # -----------------------------
+@login_required
 def lista_musicas(request):
-    guest = None
-    should_set_cookie = False
-    if not request.user.is_authenticated:
-        guest, should_set_cookie = get_or_create_guest(request)
-
     codigo = request.GET.get("codigo")
     artista = request.GET.get("artista")
     nome = request.GET.get("nome")
@@ -470,23 +390,19 @@ def lista_musicas(request):
         print(f"[ERRO] Falha ao buscar músicas: {e}")
         contexto["erro"] = "Erro ao carregar músicas"
 
-    contexto.update(guest_usage_context(request, guest))
-    response = render(request, "musicas/lista.html", contexto)
-    if guest and should_set_cookie:
-        set_guest_cookie(response, guest)
-    return response
+    contexto.update(user_usage_context(request.user))
+    return render(request, "musicas/lista.html", contexto)
 
 
 # -----------------------------
 # DETALHE DA MÚSICA
 # -----------------------------
 @ensure_csrf_cookie
+@login_required
 def detalhe_musica(request, codigo):
     codigo = str(codigo).zfill(5)
-    guest, access_response, should_set_cookie = ensure_music_access(request, codigo)
+    access_response = ensure_music_access(request, codigo)
     if access_response:
-        if guest and should_set_cookie:
-            set_guest_cookie(access_response, guest)
         return access_response
 
     musica = buscar_musica_por_codigo(codigo)
@@ -508,27 +424,23 @@ def detalhe_musica(request, codigo):
         "token": token,
         "next_url": next_url,
     }
-    context.update(guest_usage_context(request, guest))
+    context.update(user_usage_context(request.user))
 
-    response = render(
+    return render(
         request,
         "musicas/details.html",
         context,
     )
-    if guest and should_set_cookie:
-        set_guest_cookie(response, guest)
-    return response
 
 
 # -----------------------------
 # MODO PALCO (NOVA VIEW HTML)
 # -----------------------------
+@login_required
 def modo_palco(request, codigo):
     codigo = str(codigo).zfill(5)
-    guest, access_response, should_set_cookie = ensure_music_access(request, codigo)
+    access_response = ensure_music_access(request, codigo)
     if access_response:
-        if guest and should_set_cookie:
-            set_guest_cookie(access_response, guest)
         return access_response
 
     musica = buscar_musica_por_codigo(codigo)
@@ -559,25 +471,21 @@ def modo_palco(request, codigo):
         "hide_nav": True,
         "hide_container": True,
     }
-    context.update(guest_usage_context(request, guest))
+    context.update(user_usage_context(request.user))
 
-    response = render(
+    return render(
         request,
         "musicas/Palco.html",
         context,
     )
-    if guest and should_set_cookie:
-        set_guest_cookie(response, guest)
-    return response
 
 # -----------------------------
 # STREAM DE VÍDEO (SEM CONTAR PLAY)
 # -----------------------------
+@login_required
 def stream_video(request, codigo):
-    guest, access_response, should_set_cookie = ensure_music_access(request, codigo, json_response=True)
+    access_response = ensure_music_access(request, codigo, json_response=True)
     if access_response:
-        if guest and should_set_cookie:
-            set_guest_cookie(access_response, guest)
         return access_response
 
     token = request.GET.get("token")
@@ -603,10 +511,7 @@ def stream_video(request, codigo):
     if video_base_url:
         caminho_video = str(musica_dict["caminho_video"]).replace("\\", "/").lstrip("/")
         video_url = f"{video_base_url}/{quote(caminho_video, safe='/')}"
-        response = HttpResponseRedirect(video_url)
-        if guest and should_set_cookie:
-            set_guest_cookie(response, guest)
-        return response
+        return HttpResponseRedirect(video_url)
 
     path = os.path.join(settings.MEDIA_ROOT, musica_dict["caminho_video"])
     if not os.path.exists(path):
@@ -645,16 +550,13 @@ def stream_video(request, codigo):
         response["Content-Length"] = str(file_size)
         response["Accept-Ranges"] = "bytes"
 
-    if guest and should_set_cookie:
-        set_guest_cookie(response, guest)
     return response
 
 
+@login_required
 def stream_video_tom(request, codigo, tom):
-    guest, access_response, should_set_cookie = ensure_music_access(request, codigo, json_response=True)
+    access_response = ensure_music_access(request, codigo, json_response=True)
     if access_response:
-        if guest and should_set_cookie:
-            set_guest_cookie(access_response, guest)
         return access_response
 
     token_error = validate_stream_token(request, codigo)
@@ -683,17 +585,13 @@ def stream_video_tom(request, codigo, tom):
     except RuntimeError as exc:
         return JsonResponse({"error": str(exc)}, status=503)
 
-    response = serve_video_file(request, output_path)
-    if guest and should_set_cookie:
-        set_guest_cookie(response, guest)
-    return response
+    return serve_video_file(request, output_path)
 
 
+@login_required
 def prepare_video_tom(request, codigo, tom):
-    guest, access_response, should_set_cookie = ensure_music_access(request, codigo, json_response=True)
+    access_response = ensure_music_access(request, codigo, json_response=True)
     if access_response:
-        if guest and should_set_cookie:
-            set_guest_cookie(access_response, guest)
         return access_response
 
     semitones = parse_tom(tom)
@@ -750,13 +648,12 @@ def prepare_video_tom(request, codigo, tom):
 
 @csrf_exempt
 @require_POST
+@login_required
 def registrar_play(request, codigo):
     raw = str(codigo)
     codigo_norm = raw.zfill(5)
-    guest, access_response, should_set_cookie = ensure_music_access(request, codigo_norm, json_response=True)
+    access_response = ensure_music_access(request, codigo_norm, json_response=True)
     if access_response:
-        if guest and should_set_cookie:
-            set_guest_cookie(access_response, guest)
         return access_response
 
     session_key = f"played_{codigo_norm}"
@@ -775,7 +672,7 @@ def registrar_play(request, codigo):
     musica_dict = buscar_musica_por_codigo(codigo_norm) or {}
     nome = musica_dict.get("nome") or ""
     artista = musica_dict.get("artista") or ""
-    guest_play_result = mark_guest_play(request, codigo_norm, musica_dict)
+    user_play_result = mark_user_play(request, codigo_norm, musica_dict)
 
     # tenta achar registro existente (aceita codigo "1001" e "01001")
     obj = Musica.objects.filter(codigo__in=[raw, codigo_norm]).first()
@@ -805,16 +702,7 @@ def registrar_play(request, codigo):
 
     request.session[session_key] = now_ts
     payload = {"ok": True, "counted": True}
-    if guest_play_result:
-        guest_play, _ = guest_play_result
-        used = guest_play.guest.plays.count()
-        payload.update({
-            "guest_used": used,
-            "guest_remaining": max(GUEST_LIMIT - used, 0),
-            "guest_limit": GUEST_LIMIT,
-        })
+    if user_play_result:
+        payload.update(user_usage_context(request.user))
 
-    response = JsonResponse(payload)
-    if guest and should_set_cookie:
-        set_guest_cookie(response, guest)
-    return response
+    return JsonResponse(payload)

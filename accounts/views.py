@@ -1,14 +1,16 @@
-#accounts/views.py
+# accounts/views.py
+import os
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
-from django.shortcuts import render, redirect
+from django.contrib.auth.views import LoginView
+from django.shortcuts import redirect, render
+
 from musicas.models import Musica
 from .forms import SiteConfigurationForm, UserRegisterForm
 from .models import SiteConfiguration, User
-from django.contrib.auth.views import LoginView
-import os
-
 
 
 class CustomLoginView(LoginView):
@@ -20,15 +22,12 @@ class CustomLoginView(LoginView):
         return response
 
     def get_success_url(self):
-        # sempre volta pra HOME
         return "/"
-
 
 
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect("home")  # ✅ já logado, fica na HOME
-
+        return redirect("home")
 
     site_config = SiteConfiguration.get_solo()
     if not site_config.allow_registration:
@@ -38,16 +37,20 @@ def register_view(request):
     if request.method == "POST":
         form = UserRegisterForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Conta criada com sucesso! Agora faça login.")
-            return redirect("home")  # auth_views.LoginView (name="login")
-        else:
-            messages.error(request, "Corrija os erros abaixo e tente novamente.")
+            user = form.save(commit=False)
+            user.song_limit = int(getattr(settings, "FREE_SONG_LIMIT", 2))
+            user.save()
+            form.save_m2m()
+            messages.success(
+                request,
+                f"Conta criada com sucesso! Voce tem {user.song_limit} musicas iniciais liberadas.",
+            )
+            return redirect("home")
+        messages.error(request, "Corrija os erros abaixo e tente novamente.")
     else:
         form = UserRegisterForm()
 
     return render(request, "registration/register.html", {"form": form})
-
 
 
 @staff_member_required
@@ -104,5 +107,5 @@ def admin_dashboard(request):
 
 def logout_view(request):
     logout(request)
-    messages.success(request, "Obrigado! Volte sempre 🤠")
+    messages.success(request, "Obrigado! Volte sempre.")
     return redirect("home")

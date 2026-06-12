@@ -56,6 +56,8 @@ class User(AbstractUser):
         ("O", "Outro"),
     )
     sex = models.CharField("Sexo", max_length=1, choices=SEX_CHOICES)
+    song_limit = models.PositiveIntegerField("Limite inicial de musicas", default=2)
+    access_released = models.BooleanField("Acesso liberado pelo admin", default=False)
 
     musical_genre = models.ManyToManyField(
     MusicalGenre,
@@ -86,35 +88,21 @@ class MusicaEstatistica(models.Model):
         return f"{self.nome} - {self.artista}"
 
 
-class GuestSession(models.Model):
-    token = models.CharField(max_length=64, unique=True)
-    fingerprint_hash = models.CharField(max_length=64, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_seen = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Sessao de convidado"
-        verbose_name_plural = "Sessoes de convidados"
-
-    def __str__(self):
-        return f"Convidado {self.pk}"
-
-
-class GuestPlay(models.Model):
-    guest = models.ForeignKey(GuestSession, on_delete=models.CASCADE, related_name="plays")
+class UserPlay(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="song_plays")
     codigo = models.CharField(max_length=20)
     nome = models.CharField(max_length=200, blank=True)
     artista = models.CharField(max_length=200, blank=True)
     played_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Musica de convidado"
-        verbose_name_plural = "Musicas de convidados"
-        unique_together = ("guest", "codigo")
+        verbose_name = "Musica cantada por usuario"
+        verbose_name_plural = "Musicas cantadas por usuarios"
+        unique_together = ("user", "codigo")
         ordering = ["-played_at"]
 
     def __str__(self):
-        return f"{self.codigo} - {self.guest_id}"
+        return f"{self.codigo} - {self.user_id}"
 
 
 class SiteConfiguration(models.Model):

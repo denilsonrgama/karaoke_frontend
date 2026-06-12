@@ -29,10 +29,10 @@ EMAIL_USE_SSL=False
 DEFAULT_FROM_EMAIL=Karaoke do Cowboy <no-reply@karaokedocowboy.art.br>
 ```
 
-## Acesso de convidado
+## Acesso inicial de usuario
 
-O limite de musicas para convidados pode ser ajustado no Render:
+O limite de musicas iniciais para usuarios cadastrados pode ser ajustado no Render:
 
 ```env
-GUEST_SONG_LIMIT=2
+FREE_SONG_LIMIT=2
 ```

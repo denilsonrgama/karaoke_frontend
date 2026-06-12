@@ -88,14 +88,14 @@
 <div class="container mt-4">
     <h1>🎵 Karaoke do Cowboy™</h1>
 
-    {% if is_guest_access %}
+    {% if not access_released %}
         <div class="alert alert-warning text-center" style="font-weight: 700;">
-            Acesso como convidado: voce pode cantar {{ guest_limit }} musicas.
-            Restam {{ guest_remaining }}.
-            {% if guest_remaining == 0 %}
-                <a href="{% url 'accounts:register' %}" class="alert-link">Crie sua conta para continuar.</a>
+            Seu cadastro inicial permite cantar {{ song_limit }} musicas.
+            Restam {{ songs_remaining }}.
+            {% if songs_remaining == 0 %}
+                Para continuar, conclua a contribuicao e aguarde a liberacao do administrador.
             {% else %}
-                Depois disso, sera necessario criar sua conta.
+                Depois disso, sera necessario concluir a contribuicao para liberar o acesso.
             {% endif %}
         </div>
     {% endif %}
