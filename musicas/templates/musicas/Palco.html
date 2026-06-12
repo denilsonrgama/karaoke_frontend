@@ -95,6 +95,7 @@
         data-play-url="{% url 'registrar_play' musica.codigo %}"
         data-original-src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
         data-tone-src="{% url 'stream_video_tom' musica.codigo 'TONE' %}?token={{ token }}"
+        data-tone-prepare-src="{% url 'prepare_video_tom' musica.codigo 'TONE' %}?token={{ token }}"
         controls
         controlsList="nodownload noplaybackrate"
         oncontextmenu="return false;"
@@ -116,12 +117,17 @@
     const toneLabel = document.getElementById("toneLabel");
     const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
     let currentTone = 0;
+    let isPreparingTone = false;
 
     function toneUrl(tone) {
         if (tone === 0) {
             return video.dataset.originalSrc;
         }
         return video.dataset.toneSrc.replace("TONE", String(tone));
+    }
+
+    function prepareToneUrl(tone) {
+        return video.dataset.tonePrepareSrc.replace("TONE", String(tone));
     }
 
     function renderTone(tone) {
@@ -138,23 +144,57 @@
         toneLabel.textContent = `${signal}${tone} tom${Math.abs(tone) === 1 ? "" : "s"}`;
     }
 
-    function applyTone(tone, autoplay = false) {
-        if (tone === currentTone) {
+    async function applyTone(tone, autoplay = false) {
+        if (tone === currentTone || isPreparingTone) {
             renderTone(tone);
             return;
         }
 
-        currentTone = tone;
-        localStorage.setItem(toneStorageKey, String(tone));
-        renderTone(tone);
+        const previousTime = video.currentTime || 0;
+        isPreparingTone = true;
+        toneButtons.forEach((button) => { button.disabled = true; });
+        toneLabel.textContent = tone === 0 ? "Voltando..." : `Preparando ${tone > 0 ? "+" : ""}${tone}...`;
 
-        const nextSrc = toneUrl(tone);
+        let nextSrc = toneUrl(tone);
+        if (tone !== 0) {
+            try {
+                const response = await fetch(prepareToneUrl(tone), { credentials: "same-origin" });
+                const data = await response.json();
+                if (!response.ok || !data.ok || !data.url) {
+                    throw new Error(data.error || "Falha ao preparar tom");
+                }
+                nextSrc = data.url;
+            } catch (error) {
+                console.error("[tom] erro:", error);
+                renderTone(currentTone);
+                isPreparingTone = false;
+                toneButtons.forEach((button) => { button.disabled = false; });
+                return;
+            }
+        }
+
         if (video.currentSrc.endsWith(nextSrc) || video.src.endsWith(nextSrc)) {
+            currentTone = tone;
+            localStorage.setItem(toneStorageKey, String(tone));
+            renderTone(tone);
+            isPreparingTone = false;
+            toneButtons.forEach((button) => { button.disabled = false; });
             return;
         }
 
         video.src = nextSrc;
         video.load();
+        video.addEventListener("loadedmetadata", () => {
+            if (previousTime > 0 && previousTime < video.duration) {
+                video.currentTime = previousTime;
+            }
+        }, { once: true });
+
+        currentTone = tone;
+        localStorage.setItem(toneStorageKey, String(tone));
+        renderTone(tone);
+        isPreparingTone = false;
+        toneButtons.forEach((button) => { button.disabled = false; });
 
         if (autoplay) {
             video.play().catch(() => {});

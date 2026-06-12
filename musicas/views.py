@@ -26,12 +26,14 @@ import math
 import os
 import re
 import subprocess
+import tempfile
 from urllib.parse import quote
 from django.db.models import F
 
 
 # Token válido por 5 minutos
 TOKEN_TTL = 300  # segundos
+TONE_CACHE_MAX_BYTES = int(getattr(settings, "TONE_CACHE_MAX_BYTES", 2 * 1024 * 1024 * 1024))
 
 
 def safe_next_url(request, fallback_url):
@@ -71,6 +73,141 @@ def video_source_from_musica(musica_dict):
         return f"{video_base_url}/{quote(caminho_video, safe='/')}"
 
     return os.path.join(settings.MEDIA_ROOT, musica_dict["caminho_video"])
+
+
+def parse_tom(tom):
+    try:
+        semitones = int(tom)
+    except ValueError:
+        return None
+
+    if semitones < -6 or semitones > 6:
+        return None
+    return semitones
+
+
+def tone_cache_dir():
+    path = os.path.join(tempfile.gettempdir(), "karaoke_tone_cache")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def tone_cache_path(codigo, semitones):
+    safe_codigo = re.sub(r"[^0-9A-Za-z_-]", "_", str(codigo).zfill(5))
+    return os.path.join(tone_cache_dir(), f"{safe_codigo}_{semitones:+d}.mp4")
+
+
+def prune_tone_cache():
+    files = []
+    total = 0
+    for name in os.listdir(tone_cache_dir()):
+        path = os.path.join(tone_cache_dir(), name)
+        if not os.path.isfile(path) or not name.endswith(".mp4"):
+            continue
+        size = os.path.getsize(path)
+        total += size
+        files.append((os.path.getmtime(path), size, path))
+
+    if total <= TONE_CACHE_MAX_BYTES:
+        return
+
+    for _, size, path in sorted(files):
+        try:
+            os.remove(path)
+            total -= size
+        except OSError:
+            pass
+        if total <= TONE_CACHE_MAX_BYTES:
+            break
+
+
+def serve_video_file(request, path):
+    file_size = os.path.getsize(path)
+    content_type, _ = mimetypes.guess_type(path)
+    content_type = content_type or "video/mp4"
+
+    range_header = request.headers.get("Range", "").strip()
+    range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
+
+    if range_match:
+        start = int(range_match.group(1))
+        end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+        end = min(end, file_size - 1)
+
+        if start >= file_size:
+            response = HttpResponse(status=416)
+            response["Content-Range"] = f"bytes */{file_size}"
+            return response
+
+        length = end - start + 1
+        with open(path, "rb") as f:
+            f.seek(start)
+            data = f.read(length)
+
+        response = HttpResponse(data, status=206, content_type=content_type)
+        response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
+        response["Content-Length"] = str(length)
+    else:
+        response = StreamingHttpResponse(open(path, "rb"), content_type=content_type)
+        response["Content-Length"] = str(file_size)
+
+    response["Accept-Ranges"] = "bytes"
+    response["Cache-Control"] = "private, max-age=3600"
+    return response
+
+
+def build_pitch_shift_file(source, output_path, semitones):
+    if os.path.exists(output_path):
+        return output_path
+
+    factor = math.pow(2, semitones / 12)
+    ffmpeg_bin = getattr(settings, "FFMPEG_BIN", "ffmpeg")
+    part_path = f"{output_path}.part"
+
+    command = [
+        ffmpeg_bin,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-nostdin",
+        "-reconnect",
+        "1",
+        "-reconnect_streamed",
+        "1",
+        "-reconnect_delay_max",
+        "5",
+        "-i",
+        source,
+        "-fflags",
+        "+genpts",
+        "-map",
+        "0:v:0",
+        "-map",
+        "0:a:0",
+        "-c:v",
+        "copy",
+        "-af",
+        f"rubberband=pitch={factor:.8f},asetpts=N/SR/TB",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-movflags",
+        "+faststart",
+        "-y",
+        part_path,
+    ]
+
+    try:
+        subprocess.run(command, check=True)
+    except FileNotFoundError as exc:
+        raise RuntimeError("FFmpeg indisponivel no servidor") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError("Falha ao processar tom") from exc
+
+    os.replace(part_path, output_path)
+    prune_tone_cache()
+    return output_path
 
 
 # -----------------------------
@@ -302,13 +439,9 @@ def stream_video_tom(request, codigo, tom):
     if token_error:
         return token_error
 
-    try:
-        semitones = int(tom)
-    except ValueError:
+    semitones = parse_tom(tom)
+    if semitones is None:
         return JsonResponse({"error": "Tom invalido"}, status=400)
-
-    if semitones < -6 or semitones > 6:
-        return JsonResponse({"error": "Tom fora do limite"}, status=400)
 
     if semitones == 0:
         return stream_video(request, codigo)
@@ -322,74 +455,50 @@ def stream_video_tom(request, codigo, tom):
     if not source.startswith(("http://", "https://")) and not os.path.exists(source):
         raise Http404("Video nao encontrado")
 
-    factor = math.pow(2, semitones / 12)
-    ffmpeg_bin = getattr(settings, "FFMPEG_BIN", "ffmpeg")
-
-    # Rubber Band changes pitch while preserving tempo, avoiding the sync drift
-    # caused by asetrate/atempo chains.
-    command = [
-        ffmpeg_bin,
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-nostdin",
-        "-reconnect",
-        "1",
-        "-reconnect_streamed",
-        "1",
-        "-reconnect_delay_max",
-        "5",
-        "-i",
-        source,
-        "-fflags",
-        "+genpts",
-        "-map",
-        "0:v:0",
-        "-map",
-        "0:a:0",
-        "-c:v",
-        "copy",
-        "-af",
-        f"rubberband=pitch={factor:.8f},asetpts=N/SR/TB",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "192k",
-        "-movflags",
-        "frag_keyframe+empty_moov+default_base_moof",
-        "-flush_packets",
-        "1",
-        "-f",
-        "mp4",
-        "pipe:1",
-    ]
-
+    output_path = tone_cache_path(codigo_norm, semitones)
     try:
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            bufsize=1024 * 1024,
-        )
-    except FileNotFoundError:
-        return JsonResponse({"error": "FFmpeg indisponivel no servidor"}, status=503)
+        build_pitch_shift_file(source, output_path, semitones)
+    except RuntimeError as exc:
+        return JsonResponse({"error": str(exc)}, status=503)
 
-    def stream_ffmpeg():
-        try:
-            while True:
-                chunk = process.stdout.read(1024 * 1024)
-                if not chunk:
-                    break
-                yield chunk
-        finally:
-            if process.poll() is None:
-                process.terminate()
-            if process.stdout:
-                process.stdout.close()
+    return serve_video_file(request, output_path)
 
-    response = StreamingHttpResponse(stream_ffmpeg(), content_type="video/mp4")
-    response["Cache-Control"] = "no-store"
-    return response
+
+def prepare_video_tom(request, codigo, tom):
+    token_error = validate_stream_token(request, codigo)
+    if token_error:
+        return token_error
+
+    semitones = parse_tom(tom)
+    if semitones is None:
+        return JsonResponse({"error": "Tom invalido"}, status=400)
+
+    codigo_norm = str(codigo).zfill(5)
+    fresh_token = signing.dumps(codigo_norm, salt="video-stream")
+    if semitones == 0:
+        return JsonResponse({
+            "ok": True,
+            "url": f"{reverse('stream_video', kwargs={'codigo': codigo_norm})}?token={fresh_token}",
+        })
+
+    musica_dict = buscar_musica_por_codigo(codigo_norm)
+    if not musica_dict:
+        raise Http404("Musica nao encontrada")
+
+    source = video_source_from_musica(musica_dict)
+    if not source.startswith(("http://", "https://")) and not os.path.exists(source):
+        raise Http404("Video nao encontrado")
+
+    output_path = tone_cache_path(codigo_norm, semitones)
+    try:
+        build_pitch_shift_file(source, output_path, semitones)
+    except RuntimeError as exc:
+        return JsonResponse({"error": str(exc)}, status=503)
+
+    return JsonResponse({
+        "ok": True,
+        "url": f"{reverse('stream_video_tom', kwargs={'codigo': codigo_norm, 'tom': semitones})}?token={fresh_token}",
+    })
 
 
 @csrf_exempt
