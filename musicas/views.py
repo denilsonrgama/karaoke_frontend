@@ -323,9 +323,10 @@ def stream_video_tom(request, codigo, tom):
         raise Http404("Video nao encontrado")
 
     factor = math.pow(2, semitones / 12)
-    audio_filter = f"asetrate=44100*{factor:.8f},aresample=44100,atempo={1 / factor:.8f}"
     ffmpeg_bin = getattr(settings, "FFMPEG_BIN", "ffmpeg")
 
+    # Rubber Band changes pitch while preserving tempo, avoiding the sync drift
+    # caused by asetrate/atempo chains.
     command = [
         ffmpeg_bin,
         "-hide_banner",
@@ -340,7 +341,7 @@ def stream_video_tom(request, codigo, tom):
         "-c:v",
         "copy",
         "-af",
-        audio_filter,
+        f"rubberband=pitch={factor:.8f},asetpts=N/SR/TB",
         "-c:a",
         "aac",
         "-b:a",
