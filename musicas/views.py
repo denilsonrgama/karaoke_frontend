@@ -313,11 +313,6 @@ def stream_video_tom(request, codigo, tom):
     if semitones == 0:
         return stream_video(request, codigo)
 
-    try:
-        start_seconds = max(float(request.GET.get("start", 0)), 0)
-    except ValueError:
-        start_seconds = 0
-
     codigo_norm = str(codigo).zfill(5)
     musica_dict = buscar_musica_por_codigo(codigo_norm)
     if not musica_dict:
@@ -336,8 +331,6 @@ def stream_video_tom(request, codigo, tom):
         "-hide_banner",
         "-loglevel",
         "error",
-        "-ss",
-        f"{start_seconds:.3f}",
         "-i",
         source,
         "-map",
