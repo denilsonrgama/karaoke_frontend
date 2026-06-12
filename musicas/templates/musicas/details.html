@@ -96,6 +96,42 @@ pre.letra {
     padding: 10px;
 }
 
+.tone-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: rgba(255, 248, 220, .9);
+    border: 2px solid #8b4513;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 1rem;
+}
+
+.tone-controls button {
+    min-width: 88px;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: #8b4513;
+    color: #ffd700;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.tone-controls button:hover,
+.tone-controls button.active {
+    background: #5a2d0c;
+}
+
+.tone-label {
+    min-width: 120px;
+    text-align: center;
+    color: #5a2d0c;
+    font-weight: bold;
+}
+
 /* ===== DESKTOP MODO PALCO ===== */
 @media (min-width: 768px) {
     body.palco {
@@ -105,7 +141,8 @@ pre.letra {
     body.palco h1,
     body.palco .musica-card,
     body.palco .btn-back,
-    body.palco .btn-palco {
+    body.palco .btn-palco,
+    body.palco .tone-controls {
         display: none;
     }
 
@@ -138,11 +175,22 @@ pre.letra {
         <video id="video"
                data-codigo="{{ musica.codigo }}"
                data-play-url="{% url 'registrar_play' musica.codigo %}"
+               data-original-src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
+               data-tone-src="{% url 'stream_video_tom' musica.codigo 'TONE' %}?token={{ token }}"
                controls playsinline preload="metadata"
                controlsList="nodownload noplaybackrate"
                oncontextmenu="return false">
             <source src="{% url 'stream_video' musica.codigo %}?token={{ token }}" type="video/mp4">
         </video>
+    </div>
+
+    <div class="tone-controls" aria-label="Controle de tom">
+        <button type="button" class="tone-btn" data-tone="-2">-2</button>
+        <button type="button" class="tone-btn" data-tone="-1">-1</button>
+        <button type="button" class="tone-btn active" data-tone="0">Original</button>
+        <button type="button" class="tone-btn" data-tone="1">+1</button>
+        <button type="button" class="tone-btn" data-tone="2">+2</button>
+        <span id="toneLabel" class="tone-label">Tom original</span>
     </div>
 
     {% if musica.letra %}
@@ -157,9 +205,66 @@ pre.letra {
 <script>
 const palcoBtn = document.getElementById("palcoBtn");
 const video = document.getElementById("video");
+const toneButtons = document.querySelectorAll(".tone-btn");
+const toneLabel = document.getElementById("toneLabel");
 const isMobile = window.innerWidth < 768;
 
 let playCounted = false;
+let currentTone = 0;
+const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
+
+function toneUrl(tone) {
+  if (tone === 0) {
+    return video.dataset.originalSrc;
+  }
+  return video.dataset.toneSrc.replace("TONE", String(tone));
+}
+
+function renderTone(tone) {
+  toneButtons.forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.tone) === tone);
+  });
+
+  if (tone === 0) {
+    toneLabel.textContent = "Tom original";
+    return;
+  }
+
+  const signal = tone > 0 ? "+" : "";
+  toneLabel.textContent = `${signal}${tone} tom${Math.abs(tone) === 1 ? "" : "s"}`;
+}
+
+function applyTone(tone, autoplay = false) {
+  currentTone = tone;
+  localStorage.setItem(toneStorageKey, String(tone));
+  renderTone(tone);
+
+  const nextSrc = toneUrl(tone);
+  if (video.currentSrc.endsWith(nextSrc) || video.src.endsWith(nextSrc)) {
+    return;
+  }
+
+  video.src = nextSrc;
+  video.load();
+
+  if (autoplay) {
+    video.play().catch(() => {});
+  }
+}
+
+const savedTone = Number(localStorage.getItem(toneStorageKey) || 0);
+if ([-2, -1, 0, 1, 2].includes(savedTone)) {
+  applyTone(savedTone);
+} else {
+  renderTone(0);
+}
+
+toneButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const nextTone = Number(button.dataset.tone);
+    applyTone(nextTone, !video.paused);
+  });
+});
 
 video.addEventListener("play", async () => {
   if (playCounted) return;

@@ -40,15 +40,61 @@
         cursor: pointer;
     }
 
+    .tone-controls {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: rgba(0,0,0,0.6);
+        border-radius: 8px;
+    }
+
+    .tone-controls button {
+        padding: 8px 10px;
+        background: #8b4513;
+        color: #ffd700;
+        border: 1px solid #ffd700;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .tone-controls button.active {
+        background: #5a2d0c;
+    }
+
+    .tone-label {
+        min-width: 96px;
+        text-align: center;
+        color: #ffd700;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
 </style>
 
 <button class="voltar" id="voltarBtn">⬅ Voltar</button>
+
+<div class="tone-controls" aria-label="Controle de tom">
+    <button type="button" class="tone-btn" data-tone="-2">-2</button>
+    <button type="button" class="tone-btn" data-tone="-1">-1</button>
+    <button type="button" class="tone-btn active" data-tone="0">Original</button>
+    <button type="button" class="tone-btn" data-tone="1">+1</button>
+    <button type="button" class="tone-btn" data-tone="2">+2</button>
+    <span id="toneLabel" class="tone-label">Tom original</span>
+</div>
 
 <div class="palco-wrap">
     <video
         id="video"
         data-codigo="{{ musica.codigo }}"
         data-play-url="{% url 'registrar_play' musica.codigo %}"
+        data-original-src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
+        data-tone-src="{% url 'stream_video_tom' musica.codigo 'TONE' %}?token={{ token }}"
         controls
         controlsList="nodownload noplaybackrate"
         oncontextmenu="return false;"
@@ -66,6 +112,61 @@
 (function () {
     const video = document.getElementById("video");
     const voltarBtn = document.getElementById("voltarBtn");
+    const toneButtons = document.querySelectorAll(".tone-btn");
+    const toneLabel = document.getElementById("toneLabel");
+    const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
+
+    function toneUrl(tone) {
+        if (tone === 0) {
+            return video.dataset.originalSrc;
+        }
+        return video.dataset.toneSrc.replace("TONE", String(tone));
+    }
+
+    function renderTone(tone) {
+        toneButtons.forEach((button) => {
+            button.classList.toggle("active", Number(button.dataset.tone) === tone);
+        });
+
+        if (tone === 0) {
+            toneLabel.textContent = "Tom original";
+            return;
+        }
+
+        const signal = tone > 0 ? "+" : "";
+        toneLabel.textContent = `${signal}${tone} tom${Math.abs(tone) === 1 ? "" : "s"}`;
+    }
+
+    function applyTone(tone, autoplay = false) {
+        localStorage.setItem(toneStorageKey, String(tone));
+        renderTone(tone);
+
+        const nextSrc = toneUrl(tone);
+        if (video.currentSrc.endsWith(nextSrc) || video.src.endsWith(nextSrc)) {
+            return;
+        }
+
+        video.src = nextSrc;
+        video.load();
+
+        if (autoplay) {
+            video.play().catch(() => {});
+        }
+    }
+
+    const savedTone = Number(localStorage.getItem(toneStorageKey) || 0);
+    if ([-2, -1, 0, 1, 2].includes(savedTone)) {
+        applyTone(savedTone, true);
+    } else {
+        renderTone(0);
+    }
+
+    toneButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            applyTone(Number(button.dataset.tone), !video.paused);
+        });
+    });
+
     const voltarUrl = "{{ voltar_url|default:'' }}";
     voltarBtn.addEventListener("click", () => {
         if (voltarUrl) {

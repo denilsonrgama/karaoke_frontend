@@ -22,8 +22,10 @@ from .models import Musica
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .services import buscar_musica_por_codigo, buscar_musicas
 import mimetypes
+import math
 import os
 import re
+import subprocess
 from urllib.parse import quote
 from django.db.models import F
 
@@ -41,6 +43,34 @@ def safe_next_url(request, fallback_url):
     ):
         return next_url
     return fallback_url
+
+
+def validate_stream_token(request, codigo):
+    token = request.GET.get("token")
+    if not token:
+        return JsonResponse({"error": "Token nÃ£o fornecido"}, status=403)
+
+    try:
+        token_codigo = signing.loads(token, salt="video-stream", max_age=TOKEN_TTL)
+    except signing.SignatureExpired:
+        return JsonResponse({"error": "Token expirado"}, status=403)
+    except signing.BadSignature:
+        return JsonResponse({"error": "Token invÃ¡lido"}, status=403)
+
+    codigo_norm = str(codigo).zfill(5)
+    if codigo_norm != token_codigo:
+        return JsonResponse({"error": "Token nÃ£o corresponde"}, status=403)
+
+    return None
+
+
+def video_source_from_musica(musica_dict):
+    video_base_url = getattr(settings, "VIDEO_BASE_URL", "").rstrip("/")
+    if video_base_url:
+        caminho_video = str(musica_dict["caminho_video"]).replace("\\", "/").lstrip("/")
+        return f"{video_base_url}/{quote(caminho_video, safe='/')}"
+
+    return os.path.join(settings.MEDIA_ROOT, musica_dict["caminho_video"])
 
 
 # -----------------------------
@@ -264,6 +294,89 @@ def stream_video(request, codigo):
         response["Content-Length"] = str(file_size)
         response["Accept-Ranges"] = "bytes"
 
+    return response
+
+
+def stream_video_tom(request, codigo, tom):
+    token_error = validate_stream_token(request, codigo)
+    if token_error:
+        return token_error
+
+    try:
+        semitones = int(tom)
+    except ValueError:
+        return JsonResponse({"error": "Tom invalido"}, status=400)
+
+    if semitones < -6 or semitones > 6:
+        return JsonResponse({"error": "Tom fora do limite"}, status=400)
+
+    if semitones == 0:
+        return stream_video(request, codigo)
+
+    codigo_norm = str(codigo).zfill(5)
+    musica_dict = buscar_musica_por_codigo(codigo_norm)
+    if not musica_dict:
+        raise Http404("Musica nao encontrada")
+
+    source = video_source_from_musica(musica_dict)
+    if not source.startswith(("http://", "https://")) and not os.path.exists(source):
+        raise Http404("Video nao encontrado")
+
+    factor = math.pow(2, semitones / 12)
+    audio_filter = f"asetrate=44100*{factor:.8f},aresample=44100,atempo={1 / factor:.8f}"
+    ffmpeg_bin = getattr(settings, "FFMPEG_BIN", "ffmpeg")
+
+    command = [
+        ffmpeg_bin,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        source,
+        "-map",
+        "0:v:0",
+        "-map",
+        "0:a:0",
+        "-c:v",
+        "copy",
+        "-af",
+        audio_filter,
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-movflags",
+        "frag_keyframe+empty_moov+default_base_moof",
+        "-f",
+        "mp4",
+        "pipe:1",
+    ]
+
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            bufsize=1024 * 1024,
+        )
+    except FileNotFoundError:
+        return JsonResponse({"error": "FFmpeg indisponivel no servidor"}, status=503)
+
+    def stream_ffmpeg():
+        try:
+            while True:
+                chunk = process.stdout.read(1024 * 1024)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            if process.poll() is None:
+                process.terminate()
+            if process.stdout:
+                process.stdout.close()
+
+    response = StreamingHttpResponse(stream_ffmpeg(), content_type="video/mp4")
+    response["Cache-Control"] = "no-store"
     return response
 
 
