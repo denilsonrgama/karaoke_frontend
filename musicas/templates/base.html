@@ -6,19 +6,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{% block title %}Karaokê{% endblock %}</title>
+    <title>{% block title %}Karaoke{% endblock %}</title>
 
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --app-nav-offset: 78px;
+        }
+
+        .app-navbar {
+            min-height: 58px;
+        }
+
+        .app-navbar .navbar-brand {
+            white-space: nowrap;
+        }
+
+        .app-nav-actions {
+            min-width: 0;
+        }
+
+        .app-user-greeting {
+            max-width: min(34vw, 260px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .app-page-offset {
+            padding-top: var(--app-nav-offset);
+        }
+
+        @media (max-width: 576px) {
+            :root {
+                --app-nav-offset: 76px;
+            }
+
+            .app-navbar {
+                align-items: flex-start;
+                gap: 8px;
+                padding: 8px 10px !important;
+            }
+
+            .app-navbar .navbar-brand {
+                font-size: 1rem;
+                line-height: 1.2;
+                max-width: 42vw;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .app-nav-actions {
+                justify-content: flex-end;
+                gap: 6px !important;
+                flex-wrap: wrap;
+                flex: 1 1 auto;
+            }
+
+            .app-nav-actions .btn {
+                font-size: .78rem;
+                line-height: 1.1;
+                padding: .28rem .45rem;
+            }
+
+            .app-user-greeting {
+                display: none;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-light text-dark">
 
 {% if not hide_nav %}
-<nav class="navbar navbar-dark bg-black px-4 shadow-sm fixed-top">
-    <a class="navbar-brand fw-bold" href="{% url 'home' %}">🎤 Karaokê</a>
+<nav class="navbar navbar-dark bg-black px-4 shadow-sm fixed-top app-navbar">
+    <a class="navbar-brand fw-bold" href="{% url 'home' %}">Karaoke</a>
 
-    <div class="d-flex gap-2 align-items-center">
+    <div class="d-flex gap-2 align-items-center app-nav-actions">
         <a href="{% url 'lista_musicas' %}" class="btn btn-outline-light btn-sm">Lista</a>
 
         {% if user.is_authenticated %}
@@ -27,10 +92,9 @@
             {% endif %}
             <a href="{% url 'password_change' %}" class="btn btn-outline-warning btn-sm">Senha</a>
 
-            <span class="navbar-text text-light ms-2 me-2">
-                Olá, {{ user.username|default:user.full_name|default:user.email }}. Seja bem vindo!
+            <span class="navbar-text text-light ms-2 me-2 app-user-greeting">
+                Ola, {{ user.username|default:user.full_name|default:user.email }}. Seja bem vindo!
             </span>
-
 
             <a href="{% url 'accounts:logout' %}" class="btn btn-outline-light btn-sm">Sair</a>
         {% else %}
@@ -42,7 +106,7 @@
 {% endif %}
 
 {% if messages %}
-  <div class="container" style="padding-top:70px">
+  <div class="container app-page-offset">
     {% for message in messages %}
       <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
         {{ message }}
@@ -52,9 +116,8 @@
   </div>
 {% endif %}
 
-
 {% if not hide_container %}
-<div class="container my-4" style="padding-top:70px">
+<div class="container my-4 app-page-offset">
 {% endif %}
 
 {% block content %}{% endblock %}
