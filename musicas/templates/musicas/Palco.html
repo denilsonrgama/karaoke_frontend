@@ -40,46 +40,9 @@
         cursor: pointer;
     }
 
-    .tone-controls {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px;
-        background: rgba(0,0,0,0.6);
-        border-radius: 8px;
-    }
-
-    .tone-controls button {
-        padding: 8px 10px;
-        background: #8b4513;
-        color: #ffd700;
-        border: 1px solid #ffd700;
-        border-radius: 6px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .tone-label {
-        min-width: 96px;
-        text-align: center;
-        color: #ffd700;
-        font-weight: bold;
-        font-size: 14px;
-    }
 </style>
 
 <button class="voltar" id="voltarBtn">⬅ Voltar</button>
-
-<div class="tone-controls" aria-label="Controle de tom">
-    <button type="button" id="toneDown">- Tom</button>
-    <span id="toneLabel" class="tone-label">Tom original</span>
-    <button type="button" id="toneUp">+ Tom</button>
-    <button type="button" id="toneReset">Resetar</button>
-</div>
 
 <div class="palco-wrap">
     <video
@@ -103,45 +66,6 @@
 (function () {
     const video = document.getElementById("video");
     const voltarBtn = document.getElementById("voltarBtn");
-    const toneDown = document.getElementById("toneDown");
-    const toneUp = document.getElementById("toneUp");
-    const toneReset = document.getElementById("toneReset");
-    const toneLabel = document.getElementById("toneLabel");
-    let semitones = 0;
-    const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
-
-    function setPitchPreservation(enabled) {
-        ["preservesPitch", "mozPreservesPitch", "webkitPreservesPitch"].forEach((prop) => {
-            if (prop in video) {
-                video[prop] = enabled;
-            }
-        });
-    }
-
-    function renderToneLabel() {
-        if (semitones === 0) {
-            toneLabel.textContent = "Tom original";
-            return;
-        }
-
-        const signal = semitones > 0 ? "+" : "";
-        toneLabel.textContent = `${signal}${semitones} tom${Math.abs(semitones) === 1 ? "" : "s"}`;
-    }
-
-    function applyTone(nextSemitones) {
-        semitones = Math.max(-6, Math.min(6, nextSemitones));
-        setPitchPreservation(false);
-        video.playbackRate = Math.pow(2, semitones / 12);
-        localStorage.setItem(toneStorageKey, String(semitones));
-        renderToneLabel();
-    }
-
-    applyTone(Number(localStorage.getItem(toneStorageKey) || 0));
-
-    toneDown.addEventListener("click", () => applyTone(semitones - 1));
-    toneUp.addEventListener("click", () => applyTone(semitones + 1));
-    toneReset.addEventListener("click", () => applyTone(0));
-
     const voltarUrl = "{{ voltar_url|default:'' }}";
     voltarBtn.addEventListener("click", () => {
         if (voltarUrl) {
