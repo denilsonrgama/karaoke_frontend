@@ -149,7 +149,7 @@ pre.letra {
         <pre class="letra">{{ musica.letra }}</pre>
     {% endif %}
 
-    <a href="{% url 'lista_musicas' %}" class="btn btn-back mt-3">
+    <a href="{{ next_url }}" class="btn btn-back mt-3">
         ⬅ Voltar à Lista
     </a>
 </div>

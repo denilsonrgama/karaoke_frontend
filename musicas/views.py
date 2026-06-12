@@ -13,6 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.core import signing
 from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from accounts.models import MusicaEstatistica
 from musicas.models import Musica
@@ -28,6 +30,18 @@ from django.db.models import F
 
 # Token válido por 5 minutos
 TOKEN_TTL = 300  # segundos
+
+
+def safe_next_url(request, fallback_url):
+    next_url = request.GET.get("next")
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return fallback_url
+
 
 # -----------------------------
 # pagina de acesso - home
@@ -84,7 +98,9 @@ def lista_musicas(request):
         pagina = 1
 
     if codigo:
-        return redirect("detalhe_musica", codigo=str(codigo).zfill(5))
+        detalhe_url = reverse("detalhe_musica", kwargs={"codigo": str(codigo).zfill(5)})
+        next_url = quote(request.get_full_path(), safe="")
+        return redirect(f"{detalhe_url}?next={next_url}")
 
     contexto = {
         "musicas": [],
@@ -130,7 +146,7 @@ def detalhe_musica(request, codigo):
 
     token = signing.dumps(codigo, salt="video-stream")
 
-    next_url = request.GET.get("next")
+    next_url = safe_next_url(request, reverse("lista_musicas"))
 
     return render(
         request,
@@ -167,7 +183,8 @@ def modo_palco(request, codigo):
 
     token = signing.dumps(codigo, salt="video-stream")
 
-    next_url = request.GET.get("next")
+    fallback_url = reverse("detalhe_musica", kwargs={"codigo": codigo})
+    next_url = safe_next_url(request, fallback_url)
 
     return render(
         request,
