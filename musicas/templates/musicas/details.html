@@ -55,12 +55,30 @@ h1 {
     overflow: hidden;
     border: 3px solid #8b4513;
     margin-bottom: 1rem;
+    position: relative;
 }
 
 video {
     width: 100%;
     height: auto;
     background: black;
+}
+
+.video-lock {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.45);
+    color: #ffd700;
+    font-weight: bold;
+    text-align: center;
+}
+
+.video-lock.active {
+    display: flex;
 }
 
 /* ===== LETRA ===== */
@@ -215,6 +233,7 @@ pre.letra {
                oncontextmenu="return false">
             <source src="{% url 'stream_video' musica.codigo %}?token={{ token }}" type="video/mp4">
         </video>
+        <div id="videoLock" class="video-lock">Preparando tom...</div>
     </div>
 
     <div class="tone-controls" aria-label="Controle de tom">
@@ -247,6 +266,7 @@ const toneLabel = document.getElementById("toneLabel");
 const toneProgress = document.getElementById("toneProgress");
 const toneProgressBar = document.getElementById("toneProgressBar");
 const toneCancel = document.getElementById("toneCancel");
+const videoLock = document.getElementById("videoLock");
 const voltarUrl = "{{ next_url|escapejs }}";
 const isMobile = window.innerWidth < 768;
 
@@ -281,6 +301,12 @@ function setToneControlsPreparing(preparing) {
   isPreparingTone = preparing;
   toneButtons.forEach((button) => { button.disabled = preparing; });
   toneCancel.classList.toggle("active", preparing);
+  videoLock.classList.toggle("active", preparing);
+  if (preparing) {
+    video.removeAttribute("controls");
+  } else {
+    video.setAttribute("controls", "");
+  }
 }
 
 async function waitForPreparedTone(tone) {
@@ -417,6 +443,11 @@ toneCancel.addEventListener("click", () => {
 });
 
 video.addEventListener("play", async () => {
+  if (isPreparingTone) {
+    video.pause();
+    return;
+  }
+
   if (playCounted) return;
 
   try {

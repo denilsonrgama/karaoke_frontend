@@ -19,6 +19,24 @@
         z-index: 9999;
     }
 
+    .video-lock {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,.45);
+        color: #ffd700;
+        font-weight: bold;
+        text-align: center;
+        pointer-events: auto;
+    }
+
+    .video-lock.active {
+        display: flex;
+    }
+
     video {
         width: 100vw;
         height: 100vh;
@@ -142,6 +160,7 @@
     >
         Seu navegador não suporta vídeo.
     </video>
+    <div id="videoLock" class="video-lock">Preparando tom...</div>
 </div>
 
 <script>
@@ -153,6 +172,7 @@
     const toneProgress = document.getElementById("toneProgress");
     const toneProgressBar = document.getElementById("toneProgressBar");
     const toneCancel = document.getElementById("toneCancel");
+    const videoLock = document.getElementById("videoLock");
     const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
     let currentTone = 0;
     let isPreparingTone = false;
@@ -183,6 +203,12 @@
         isPreparingTone = preparing;
         toneButtons.forEach((button) => { button.disabled = preparing; });
         toneCancel.classList.toggle("active", preparing);
+        videoLock.classList.toggle("active", preparing);
+        if (preparing) {
+            video.removeAttribute("controls");
+        } else {
+            video.setAttribute("controls", "");
+        }
     }
 
     async function waitForPreparedTone(tone) {
@@ -329,6 +355,11 @@
 
     let playCounted = false;
     video.addEventListener("play", async () => {
+        if (isPreparingTone) {
+            video.pause();
+            return;
+        }
+
         if (playCounted) return;
 
         try {
