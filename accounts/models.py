@@ -84,3 +84,26 @@ class MusicaEstatistica(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.artista}"
+
+
+class SiteConfiguration(models.Model):
+    site_name = models.CharField(max_length=120, default="Karaoke do Cowboy")
+    hero_subtitle = models.CharField(
+        max_length=180,
+        default="As 3 mais pedidas do saloon -- bora cantar!",
+    )
+    allow_registration = models.BooleanField(default=True)
+    maintenance_message = models.CharField(max_length=220, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuracao do site"
+        verbose_name_plural = "Configuracoes do site"
+
+    def __str__(self):
+        return self.site_name
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

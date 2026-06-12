@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from musicas.models import Musica
-from .models import User, MusicalGenre
+from .models import SiteConfiguration, User, MusicalGenre
 
 
 @admin.register(MusicalGenre)
@@ -46,6 +46,11 @@ class UserAdmin(BaseUserAdmin):
     )
 
     filter_horizontal = ("musical_genre",)
+
+
+@admin.register(SiteConfiguration)
+class SiteConfigurationAdmin(admin.ModelAdmin):
+    list_display = ("site_name", "allow_registration", "updated_at")
 
 
 @admin.register(Musica)

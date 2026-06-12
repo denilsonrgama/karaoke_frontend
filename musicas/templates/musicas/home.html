@@ -146,8 +146,8 @@ body{
 
   <!-- HERO -->
   <div class="hero" style="--hero-bg: url('{{ hero_background_url }}');">
-    <h1>🤠 Karaokê do Cowboy</h1>
-    <p>As 3 mais pedidas do saloon — bora cantar!</p>
+    <h1>🤠 {{ site_config.site_name }}</h1>
+    <p>{{ site_config.hero_subtitle }}</p>
 
     {% if user.is_authenticated %}
       <a href="{% url 'lista_musicas' %}" class="btn btn-primary">🎵 Cantar agora</a>

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Administracao do site{% endblock %}
+
+{% block content %}
+<style>
+.admin-shell {
+  max-width: 1120px;
+  margin: 0 auto 48px;
+}
+
+.admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.admin-title h1 {
+  margin: 0;
+  color: #5a2d0c;
+  font-weight: 900;
+}
+
+.admin-title p {
+  margin: 4px 0 0;
+  color: #6b5a4b;
+  font-weight: 600;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.metric-card,
+.admin-panel {
+  background: #fff;
+  border: 1px solid rgba(90,45,12,.18);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+
+.metric-card {
+  padding: 16px;
+}
+
+.metric-label {
+  color: #6b5a4b;
+  font-weight: 700;
+  font-size: .92rem;
+}
+
+.metric-value {
+  color: #5a2d0c;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+  gap: 16px;
+}
+
+.admin-panel {
+  padding: 18px;
+}
+
+.admin-panel h2 {
+  margin: 0 0 14px;
+  font-size: 1.2rem;
+  color: #5a2d0c;
+  font-weight: 900;
+}
+
+.form-row {
+  margin-bottom: 14px;
+}
+
+.form-row label {
+  display: block;
+  margin-bottom: 5px;
+  color: #4b2e1b;
+  font-weight: 800;
+}
+
+.quick-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.top-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.top-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(90,45,12,.12);
+}
+
+.top-list li:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 820px) {
+  .admin-header,
+  .admin-grid {
+    display: block;
+  }
+
+  .admin-panel {
+    margin-bottom: 16px;
+  }
+}
+</style>
+
+<div class="admin-shell">
+  <div class="admin-header">
+    <div class="admin-title">
+      <h1>Administracao do site</h1>
+      <p>{{ request.user.full_name|default:request.user.email }} - perfil administrativo</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{% url 'home' %}">Voltar para home</a>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Usuarios</div>
+      <div class="metric-value">{{ total_users }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Usuarios ativos</div>
+      <div class="metric-value">{{ active_users }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Administradores</div>
+      <div class="metric-value">{{ staff_users }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Musicas no ranking</div>
+      <div class="metric-value">{{ total_musicas }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Cache de tons</div>
+      <div class="metric-value">{{ tone_cache_count }}</div>
+      <div class="metric-label">{{ tone_cache_mb }} MB</div>
+    </div>
+  </div>
+
+  <div class="admin-grid">
+    <section class="admin-panel">
+      <h2>Configuracoes da home</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_config">
+
+        <div class="form-row">
+          <label for="{{ form.site_name.id_for_label }}">Nome do site</label>
+          {{ form.site_name }}
+          {{ form.site_name.errors }}
+        </div>
+
+        <div class="form-row">
+          <label for="{{ form.hero_subtitle.id_for_label }}">Subtitulo da home</label>
+          {{ form.hero_subtitle }}
+          {{ form.hero_subtitle.errors }}
+        </div>
+
+        <div class="form-row">
+          <label for="{{ form.maintenance_message.id_for_label }}">Mensagem administrativa</label>
+          {{ form.maintenance_message }}
+          {{ form.maintenance_message.errors }}
+        </div>
+
+        <div class="form-check mb-3">
+          {{ form.allow_registration }}
+          <label class="form-check-label" for="{{ form.allow_registration.id_for_label }}">
+            Permitir novos cadastros
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-success">Salvar configuracoes</button>
+      </form>
+    </section>
+
+    <aside class="admin-panel">
+      <h2>Atalhos</h2>
+      <div class="quick-actions">
+        <a class="btn btn-dark" href="{% url 'admin:index' %}">Abrir Django admin</a>
+        <a class="btn btn-outline-primary" href="{% url 'admin:accounts_user_changelist' %}">Gerenciar usuarios</a>
+        <a class="btn btn-outline-primary" href="{% url 'admin:musicas_musica_changelist' %}">Gerenciar ranking</a>
+        <a class="btn btn-outline-primary" href="{% url 'lista_musicas' %}">Abrir lista de musicas</a>
+      </div>
+
+      <hr>
+
+      <h2>Manutencao</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="clear_tone_cache">
+        <button type="submit" class="btn btn-outline-danger w-100">Limpar cache de tons</button>
+      </form>
+    </aside>
+  </div>
+
+  <section class="admin-panel mt-3">
+    <h2>Top musicas</h2>
+    <ul class="top-list">
+      {% for musica in top_musicas %}
+        <li>
+          <span>{{ musica.nome }} - {{ musica.artista }}</span>
+          <strong>{{ musica.acessos }}</strong>
+        </li>
+      {% empty %}
+        <li>Nenhuma musica no ranking ainda.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

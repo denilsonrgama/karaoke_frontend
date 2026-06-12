@@ -7,11 +7,12 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
 from musicas import views
-from accounts.views import CustomLoginView
+from accounts.views import CustomLoginView, admin_dashboard
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("site-admin/", admin_dashboard, name="site_admin"),
 
     # HOME
     path("", views.home, name="home"),

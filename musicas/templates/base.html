@@ -22,6 +22,9 @@
         <a href="{% url 'lista_musicas' %}" class="btn btn-outline-light btn-sm">Lista</a>
 
         {% if user.is_authenticated %}
+            {% if user.is_staff %}
+                <a href="{% url 'site_admin' %}" class="btn btn-outline-info btn-sm">Admin</a>
+            {% endif %}
             <a href="{% url 'password_change' %}" class="btn btn-outline-warning btn-sm">Senha</a>
 
             <span class="navbar-text text-light ms-2 me-2">

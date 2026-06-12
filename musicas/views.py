@@ -16,7 +16,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from accounts.models import MusicaEstatistica
+from accounts.models import MusicaEstatistica, SiteConfiguration
 from musicas.models import Musica
 from .models import Musica
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -248,6 +248,7 @@ from .models import Musica
 
 def home(request):
     top3 = Musica.objects.order_by("-acessos", "-id")[:3]
+    site_config = SiteConfiguration.get_solo()
     video_base_url = getattr(settings, "VIDEO_BASE_URL", "").rstrip("/")
     hero_background_url = (
         f"{video_base_url}/thumbs/karaoke-background.jpg"
@@ -273,6 +274,7 @@ def home(request):
         "musicas/home.html",
         {
             "top3": top3,
+            "site_config": site_config,
             "hero_background_url": hero_background_url,
             "hide_nav": True,        # Home sem menu
             "hide_container": True,  # Home sem container do base
