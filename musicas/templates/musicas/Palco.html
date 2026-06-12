@@ -178,8 +178,8 @@
             return;
         }
 
-        const previousTime = video.currentTime || 0;
-        const shouldSwitchNow = video.paused && previousTime < 1;
+        video.pause();
+        video.currentTime = 0;
         isPreparingTone = true;
         toneButtons.forEach((button) => { button.disabled = true; });
         toneLabel.textContent = tone === 0 ? "Voltando..." : `Preparando ${tone > 0 ? "+" : ""}${tone}...`;
@@ -200,23 +200,6 @@
                 }
             }
 
-            if (!shouldSwitchNow) {
-                renderTone(currentTone);
-                toneLabel.textContent = `Tom ${tone > 0 ? "+" : ""}${tone} pronto para iniciar`;
-                isPreparingTone = false;
-                toneButtons.forEach((button) => { button.disabled = false; });
-                return;
-            }
-        }
-
-        if (!shouldSwitchNow) {
-            renderTone(currentTone);
-            toneLabel.textContent = tone === 0
-                ? "Tom original pronto para iniciar"
-                : `Tom ${tone > 0 ? "+" : ""}${tone} pronto para iniciar`;
-            isPreparingTone = false;
-            toneButtons.forEach((button) => { button.disabled = false; });
-            return;
         }
 
         if (video.currentSrc.endsWith(nextSrc) || video.src.endsWith(nextSrc)) {
@@ -234,6 +217,9 @@
         currentTone = tone;
         localStorage.setItem(toneStorageKey, String(tone));
         renderTone(tone);
+        toneLabel.textContent = tone === 0
+            ? "Tom original pronto. Aperte play."
+            : `Tom ${tone > 0 ? "+" : ""}${tone} pronto. Aperte play.`;
         isPreparingTone = false;
         toneButtons.forEach((button) => { button.disabled = false; });
 
