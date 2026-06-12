@@ -115,6 +115,7 @@
     const toneButtons = document.querySelectorAll(".tone-btn");
     const toneLabel = document.getElementById("toneLabel");
     const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
+    let currentTone = 0;
 
     function toneUrl(tone) {
         if (tone === 0) {
@@ -138,6 +139,12 @@
     }
 
     function applyTone(tone, autoplay = false) {
+        if (tone === currentTone) {
+            renderTone(tone);
+            return;
+        }
+
+        currentTone = tone;
         localStorage.setItem(toneStorageKey, String(tone));
         renderTone(tone);
 

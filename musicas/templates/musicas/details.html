@@ -235,6 +235,11 @@ function renderTone(tone) {
 }
 
 function applyTone(tone, autoplay = false) {
+  if (tone === currentTone) {
+    renderTone(tone);
+    return;
+  }
+
   currentTone = tone;
   localStorage.setItem(toneStorageKey, String(tone));
   renderTone(tone);
