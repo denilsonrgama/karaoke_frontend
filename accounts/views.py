@@ -7,8 +7,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, render
+from django.utils import timezone
 
 from musicas.models import Musica
+from payments.models import ContributionPayment
 from .forms import SiteConfigurationForm, UserRegisterForm
 from .models import SiteConfiguration, User
 
@@ -97,6 +99,13 @@ def admin_dashboard(request):
         "total_users": User.objects.count(),
         "staff_users": User.objects.filter(is_staff=True).count(),
         "active_users": User.objects.filter(is_active=True).count(),
+        "paid_active_users": User.objects.filter(access_expires_at__gt=timezone.now()).count(),
+        "approved_payments": ContributionPayment.objects.filter(
+            status=ContributionPayment.STATUS_APPROVED
+        ).count(),
+        "pending_payments": ContributionPayment.objects.filter(
+            status=ContributionPayment.STATUS_PENDING
+        ).count(),
         "total_musicas": Musica.objects.count(),
         "top_musicas": Musica.objects.order_by("-acessos", "nome")[:5],
         "tone_cache_count": cache_count,

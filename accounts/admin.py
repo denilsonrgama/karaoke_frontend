@@ -1,6 +1,7 @@
 # accounts/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils import timezone
 
 from musicas.models import Musica
 from .models import MusicalGenre, SiteConfiguration, User, UserPlay
@@ -21,8 +22,9 @@ class UserAdmin(BaseUserAdmin):
         "full_name",
         "phone",
         "sex",
+        "access_status",
+        "access_expires_at",
         "song_limit",
-        "access_released",
         "songs_used",
         "is_staff",
     )
@@ -36,7 +38,7 @@ class UserAdmin(BaseUserAdmin):
             "fields": ("username", "full_name", "phone", "sex", "musical_genre")
         }),
         ("Acesso ao karaoke", {
-            "fields": ("song_limit", "access_released")
+            "fields": ("song_limit", "access_expires_at", "access_released")
         }),
         ("Permissoes", {
             "fields": (
@@ -63,6 +65,19 @@ class UserAdmin(BaseUserAdmin):
         return obj.song_plays.count()
 
     songs_used.short_description = "Musicas usadas"
+
+    def access_status(self, obj):
+        if obj.is_staff or obj.is_superuser:
+            return "Admin"
+        if obj.access_released:
+            return "Manual"
+        if obj.access_expires_at and obj.access_expires_at > timezone.now():
+            return "Pago ativo"
+        if obj.access_expires_at:
+            return "Pago expirado"
+        return "Inicial"
+
+    access_status.short_description = "Status do acesso"
 
     def liberar_acesso(self, request, queryset):
         updated = queryset.update(access_released=True)

@@ -142,6 +142,18 @@
       <div class="metric-value">{{ active_users }}</div>
     </div>
     <div class="metric-card">
+      <div class="metric-label">Acesso pago ativo</div>
+      <div class="metric-value">{{ paid_active_users }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Pagamentos aprovados</div>
+      <div class="metric-value">{{ approved_payments }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Pix pendentes</div>
+      <div class="metric-value">{{ pending_payments }}</div>
+    </div>
+    <div class="metric-card">
       <div class="metric-label">Administradores</div>
       <div class="metric-value">{{ staff_users }}</div>
     </div>
@@ -209,6 +221,7 @@
       <div class="quick-actions">
         <a class="btn btn-dark" href="{% url 'admin:index' %}">Abrir Django admin</a>
         <a class="btn btn-outline-primary" href="{% url 'admin:accounts_user_changelist' %}">Gerenciar usuarios</a>
+        <a class="btn btn-outline-primary" href="{% url 'admin:payments_contributionpayment_changelist' %}">Ver pagamentos Pix</a>
         <a class="btn btn-outline-primary" href="{% url 'admin:musicas_musica_changelist' %}">Gerenciar ranking</a>
         <a class="btn btn-outline-primary" href="{% url 'lista_musicas' %}">Abrir lista de musicas</a>
       </div>
