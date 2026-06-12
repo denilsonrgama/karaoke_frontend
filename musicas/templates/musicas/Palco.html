@@ -346,6 +346,18 @@
         } catch (e) {}
     });
 
+    video.addEventListener("ended", async () => {
+        if (document.fullscreenElement) {
+            try { await document.exitFullscreen(); } catch (e) {}
+        }
+
+        if (voltarUrl) {
+            window.location.href = voltarUrl;
+        } else {
+            window.location.href = "{% url 'lista_musicas' %}";
+        }
+    });
+
     document.addEventListener("click", function () {
         if (video && video.paused) {
             video.play().catch(() => {});

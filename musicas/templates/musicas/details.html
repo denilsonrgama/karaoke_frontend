@@ -247,6 +247,7 @@ const toneLabel = document.getElementById("toneLabel");
 const toneProgress = document.getElementById("toneProgress");
 const toneProgressBar = document.getElementById("toneProgressBar");
 const toneCancel = document.getElementById("toneCancel");
+const voltarUrl = "{{ next_url|escapejs }}";
 const isMobile = window.innerWidth < 768;
 
 let playCounted = false;
@@ -436,6 +437,10 @@ video.addEventListener("play", async () => {
     console.error("[registrar_play] erro:", e);
   }
 }, { once: true });
+
+video.addEventListener("ended", () => {
+  window.location.href = voltarUrl;
+});
 
 palcoBtn.addEventListener("click", async () => {
     if (isMobile) {
