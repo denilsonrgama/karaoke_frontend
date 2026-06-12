@@ -194,16 +194,20 @@ def build_pitch_shift_file(source, output_path, semitones):
         "192k",
         "-movflags",
         "+faststart",
+        "-f",
+        "mp4",
         "-y",
         part_path,
     ]
 
     try:
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True, capture_output=True, text=True)
     except FileNotFoundError as exc:
         raise RuntimeError("FFmpeg indisponivel no servidor") from exc
     except subprocess.CalledProcessError as exc:
-        raise RuntimeError("Falha ao processar tom") from exc
+        error = (exc.stderr or exc.stdout or "").strip().splitlines()
+        detail = error[-1] if error else "Falha ao processar tom"
+        raise RuntimeError(detail[:180]) from exc
 
     os.replace(part_path, output_path)
     prune_tone_cache()
