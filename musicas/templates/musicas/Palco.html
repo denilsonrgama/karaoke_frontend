@@ -118,6 +118,7 @@
     const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
     let currentTone = 0;
     let isPreparingTone = false;
+    const preparedToneUrls = {};
 
     function toneUrl(tone) {
         if (tone === 0) {
@@ -151,31 +152,53 @@
         }
 
         const previousTime = video.currentTime || 0;
+        const shouldSwitchNow = video.paused && previousTime < 1;
         isPreparingTone = true;
         toneButtons.forEach((button) => { button.disabled = true; });
         toneLabel.textContent = tone === 0 ? "Voltando..." : `Preparando ${tone > 0 ? "+" : ""}${tone}...`;
 
-        let nextSrc = toneUrl(tone);
+        let nextSrc = preparedToneUrls[tone] || toneUrl(tone);
         if (tone !== 0) {
-            try {
-                const response = await fetch(prepareToneUrl(tone), { credentials: "same-origin" });
-                const contentType = response.headers.get("content-type") || "";
-                if (!contentType.includes("application/json")) {
-                    throw new Error("Sessao expirada. Recarregue a pagina.");
+            if (!preparedToneUrls[tone]) {
+                try {
+                    const response = await fetch(prepareToneUrl(tone), { credentials: "same-origin" });
+                    const contentType = response.headers.get("content-type") || "";
+                    if (!contentType.includes("application/json")) {
+                        throw new Error("Sessao expirada. Recarregue a pagina.");
+                    }
+                    const data = await response.json();
+                    if (!response.ok || !data.ok || !data.url) {
+                        throw new Error(data.error || "Falha ao preparar tom");
+                    }
+                    preparedToneUrls[tone] = data.url;
+                    nextSrc = data.url;
+                } catch (error) {
+                    console.error("[tom] erro:", error);
+                    renderTone(currentTone);
+                    toneLabel.textContent = error.message || "Erro ao preparar tom";
+                    isPreparingTone = false;
+                    toneButtons.forEach((button) => { button.disabled = false; });
+                    return;
                 }
-                const data = await response.json();
-                if (!response.ok || !data.ok || !data.url) {
-                    throw new Error(data.error || "Falha ao preparar tom");
-                }
-                nextSrc = data.url;
-            } catch (error) {
-                console.error("[tom] erro:", error);
+            }
+
+            if (!shouldSwitchNow) {
                 renderTone(currentTone);
-                toneLabel.textContent = error.message || "Erro ao preparar tom";
+                toneLabel.textContent = `Tom ${tone > 0 ? "+" : ""}${tone} pronto para iniciar`;
                 isPreparingTone = false;
                 toneButtons.forEach((button) => { button.disabled = false; });
                 return;
             }
+        }
+
+        if (!shouldSwitchNow) {
+            renderTone(currentTone);
+            toneLabel.textContent = tone === 0
+                ? "Tom original pronto para iniciar"
+                : `Tom ${tone > 0 ? "+" : ""}${tone} pronto para iniciar`;
+            isPreparingTone = false;
+            toneButtons.forEach((button) => { button.disabled = false; });
+            return;
         }
 
         if (video.currentSrc.endsWith(nextSrc) || video.src.endsWith(nextSrc)) {
@@ -189,11 +212,6 @@
 
         video.src = nextSrc;
         video.load();
-        video.addEventListener("loadedmetadata", () => {
-            if (previousTime > 0 && previousTime < video.duration) {
-                video.currentTime = previousTime;
-            }
-        }, { once: true });
 
         currentTone = tone;
         localStorage.setItem(toneStorageKey, String(tone));
@@ -206,12 +224,8 @@
         }
     }
 
-    const savedTone = Number(localStorage.getItem(toneStorageKey) || 0);
-    if ([-2, -1, 0, 1, 2].includes(savedTone)) {
-        applyTone(savedTone, true);
-    } else {
-        renderTone(0);
-    }
+    localStorage.removeItem(toneStorageKey);
+    renderTone(0);
 
     toneButtons.forEach((button) => {
         button.addEventListener("click", () => {
