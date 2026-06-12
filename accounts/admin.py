@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from musicas.models import Musica
-from .models import SiteConfiguration, User, MusicalGenre
+from .models import GuestPlay, GuestSession, SiteConfiguration, User, MusicalGenre
 
 
 @admin.register(MusicalGenre)
@@ -51,6 +51,25 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(SiteConfiguration)
 class SiteConfigurationAdmin(admin.ModelAdmin):
     list_display = ("site_name", "allow_registration", "updated_at")
+
+
+@admin.register(GuestSession)
+class GuestSessionAdmin(admin.ModelAdmin):
+    list_display = ("id", "fingerprint_hash", "created_at", "last_seen", "play_count")
+    search_fields = ("token", "fingerprint_hash")
+    readonly_fields = ("token", "fingerprint_hash", "created_at", "last_seen")
+
+    def play_count(self, obj):
+        return obj.plays.count()
+
+    play_count.short_description = "Musicas cantadas"
+
+
+@admin.register(GuestPlay)
+class GuestPlayAdmin(admin.ModelAdmin):
+    list_display = ("guest", "codigo", "nome", "artista", "played_at")
+    search_fields = ("codigo", "nome", "artista", "guest__token", "guest__fingerprint_hash")
+    readonly_fields = ("guest", "codigo", "nome", "artista", "played_at")
 
 
 @admin.register(Musica)

@@ -28,3 +28,11 @@ EMAIL_USE_TLS=True
 EMAIL_USE_SSL=False
 DEFAULT_FROM_EMAIL=Karaoke do Cowboy <no-reply@karaokedocowboy.art.br>
 ```
+
+## Acesso de convidado
+
+O limite de musicas para convidados pode ser ajustado no Render:
+
+```env
+GUEST_SONG_LIMIT=2
+```

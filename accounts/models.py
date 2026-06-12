@@ -86,6 +86,37 @@ class MusicaEstatistica(models.Model):
         return f"{self.nome} - {self.artista}"
 
 
+class GuestSession(models.Model):
+    token = models.CharField(max_length=64, unique=True)
+    fingerprint_hash = models.CharField(max_length=64, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_seen = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Sessao de convidado"
+        verbose_name_plural = "Sessoes de convidados"
+
+    def __str__(self):
+        return f"Convidado {self.pk}"
+
+
+class GuestPlay(models.Model):
+    guest = models.ForeignKey(GuestSession, on_delete=models.CASCADE, related_name="plays")
+    codigo = models.CharField(max_length=20)
+    nome = models.CharField(max_length=200, blank=True)
+    artista = models.CharField(max_length=200, blank=True)
+    played_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Musica de convidado"
+        verbose_name_plural = "Musicas de convidados"
+        unique_together = ("guest", "codigo")
+        ordering = ["-played_at"]
+
+    def __str__(self):
+        return f"{self.codigo} - {self.guest_id}"
+
+
 class SiteConfiguration(models.Model):
     site_name = models.CharField(max_length=120, default="Karaoke do Cowboy")
     hero_subtitle = models.CharField(

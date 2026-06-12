@@ -165,6 +165,7 @@ API_MUSICAS_URL = config(
 )
 
 VIDEO_BASE_URL = config("VIDEO_BASE_URL", default="")
+GUEST_SONG_LIMIT = config("GUEST_SONG_LIMIT", default=2, cast=int)
 
 
 # -----------------------

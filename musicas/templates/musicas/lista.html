@@ -88,6 +88,18 @@
 <div class="container mt-4">
     <h1>🎵 Karaoke do Cowboy™</h1>
 
+    {% if is_guest_access %}
+        <div class="alert alert-warning text-center" style="font-weight: 700;">
+            Acesso como convidado: voce pode cantar {{ guest_limit }} musicas.
+            Restam {{ guest_remaining }}.
+            {% if guest_remaining == 0 %}
+                <a href="{% url 'accounts:register' %}" class="alert-link">Crie sua conta para continuar.</a>
+            {% else %}
+                Depois disso, sera necessario criar sua conta.
+            {% endif %}
+        </div>
+    {% endif %}
+
     <form method="get" class="row g-2 mb-4">
         <div class="col-12 col-sm-6 col-md-3">
             <input type="text" name="codigo" value="{{ request.GET.codigo }}" class="form-control" placeholder="Buscar por Código">

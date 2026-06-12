@@ -221,6 +221,14 @@ pre.letra {
 
     <button id="palcoBtn" class="btn-palco">🎤 Modo Palco</button>
 
+    {% if is_guest_access %}
+        <div class="alert alert-warning text-center" style="font-weight: 700;">
+            Voce esta cantando como convidado.
+            Restam {{ guest_remaining }} de {{ guest_limit }} musicas gratuitas.
+            Para continuar depois disso, crie sua conta.
+        </div>
+    {% endif %}
+
     <div class="video-container">
         <video id="video"
                data-codigo="{{ musica.codigo }}"
@@ -459,7 +467,10 @@ video.addEventListener("play", async () => {
     let data = null;
     try { data = await r.json(); } catch(e) {}
 
-    if (r.ok && data && data.ok) {
+    if (data && data.requires_registration) {
+      video.pause();
+      window.location.href = data.register_url || "{% url 'accounts:register' %}";
+    } else if (r.ok && data && data.ok) {
       playCounted = true;
     } else {
       console.error("[registrar_play] não contou");
