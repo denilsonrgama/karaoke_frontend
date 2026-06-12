@@ -286,8 +286,8 @@
         localStorage.setItem(toneStorageKey, String(tone));
         renderTone(tone);
         toneLabel.textContent = tone === 0
-            ? "Tom original pronto. Aperte play."
-            : `Tom ${tone > 0 ? "+" : ""}${tone} pronto. Aperte play.`;
+            ? "Tom original em execucao"
+            : `Alteracao para ${tone > 0 ? "+" : ""}${tone} tom em execucao`;
         setToneProgress(0);
         setToneControlsPreparing(false);
 
