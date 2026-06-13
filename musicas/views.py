@@ -31,6 +31,7 @@ import tempfile
 import threading
 from urllib.parse import quote
 from django.db.models import F
+from payments.models import ContributionPayment
 
 
 # Token válido por 5 minutos
@@ -60,6 +61,37 @@ def user_usage_context(user):
         "songs_used": used,
         "songs_remaining": max(limit - used, 0),
     }
+
+
+def paid_access_context(user):
+    now = dj_timezone.now()
+    access_until = getattr(user, "access_expires_at", None)
+    last_payment = (
+        ContributionPayment.objects
+        .filter(user=user, status=ContributionPayment.STATUS_APPROVED)
+        .order_by("-approved_at", "-created_at")
+        .first()
+    )
+
+    context = {
+        "paid_access_active": bool(access_until and access_until > now),
+        "paid_access_until": access_until,
+        "last_paid_package": last_payment,
+    }
+
+    if access_until and access_until > now:
+        remaining_seconds = max(int((access_until - now).total_seconds()), 0)
+        hours, remainder = divmod(remaining_seconds, 3600)
+        minutes = remainder // 60
+        if hours and minutes:
+            remaining_label = f"{hours} hora(s) e {minutes} minuto(s)"
+        elif hours:
+            remaining_label = f"{hours} hora(s)"
+        else:
+            remaining_label = f"{minutes} minuto(s)"
+        context["paid_access_remaining_label"] = remaining_label
+
+    return context
 
 
 def user_can_access_music(user, codigo):
@@ -394,6 +426,7 @@ def lista_musicas(request):
         contexto["erro"] = "Erro ao carregar músicas"
 
     contexto.update(user_usage_context(request.user))
+    contexto.update(paid_access_context(request.user))
     return render(request, "musicas/lista.html", contexto)
 
 

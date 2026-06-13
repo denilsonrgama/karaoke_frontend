@@ -102,6 +102,16 @@
         </div>
     {% endif %}
 
+    {% if paid_access_active %}
+        <div class="alert alert-success text-center" style="font-weight: 700;">
+            Seu acesso pago esta ativo. Restam {{ paid_access_remaining_label }}.
+            {% if last_paid_package %}
+                Ultimo pacote adquirido: R$ {{ last_paid_package.amount }} por {{ last_paid_package.access_hours }} hora(s).
+            {% endif %}
+            <a href="{% url 'payments:payment_page' %}" class="alert-link">Adquirir mais hora(s)</a>.
+        </div>
+    {% endif %}
+
     <form method="get" class="row g-2 mb-4">
         <div class="col-12 col-sm-6 col-md-3">
             <input type="text" name="codigo" value="{{ request.GET.codigo }}" class="form-control" placeholder="Buscar por Código">
