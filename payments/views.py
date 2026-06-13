@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -18,6 +19,9 @@ from .services import (
     validate_webhook_signature,
 )
 
+PACKAGE_BLOCK_LIMIT = 4
+MIN_PACKAGE_BLOCK_PRICE = Decimal("1.00")
+
 
 def current_pending_payment(user):
     return (
@@ -27,6 +31,37 @@ def current_pending_payment(user):
         .order_by("-created_at")
         .first()
     )
+
+
+def payment_package_options(site_config):
+    base_amount = site_config.contribution_amount
+    block_hours = site_config.paid_access_hours
+    options = []
+    total_amount = Decimal("0.00")
+
+    for blocks in range(1, PACKAGE_BLOCK_LIMIT + 1):
+        block_amount = max(base_amount - Decimal(blocks - 1), MIN_PACKAGE_BLOCK_PRICE)
+        total_amount += block_amount
+        regular_amount = base_amount * blocks
+        options.append(
+            {
+                "blocks": blocks,
+                "hours": block_hours * blocks,
+                "amount": total_amount.quantize(Decimal("0.01")),
+                "discount": (regular_amount - total_amount).quantize(Decimal("0.01")),
+                "block_amount": block_amount.quantize(Decimal("0.01")),
+            }
+        )
+    return options
+
+
+def selected_payment_package(site_config, raw_blocks):
+    try:
+        blocks = int(raw_blocks)
+    except (TypeError, ValueError):
+        blocks = 1
+    blocks = min(max(blocks, 1), PACKAGE_BLOCK_LIMIT)
+    return payment_package_options(site_config)[blocks - 1]
 
 
 def sync_payment_from_mercado_pago(payment, data):
@@ -46,12 +81,14 @@ def sync_payment_from_mercado_pago(payment, data):
 def payment_page(request):
     site_config = SiteConfiguration.get_solo()
     payment = current_pending_payment(request.user)
+    package_options = payment_package_options(site_config)
     return render(
         request,
         "payments/payment_page.html",
         {
             "site_config": site_config,
             "payment": payment,
+            "package_options": package_options,
         },
     )
 
@@ -62,10 +99,11 @@ def create_payment(request):
     site_config = SiteConfiguration.get_solo()
     payment = current_pending_payment(request.user)
     if payment is None:
+        package = selected_payment_package(site_config, request.POST.get("package_blocks"))
         payment = ContributionPayment.objects.create(
             user=request.user,
-            amount=site_config.contribution_amount,
-            access_hours=site_config.paid_access_hours,
+            amount=package["amount"],
+            access_hours=package["hours"],
             external_reference=make_external_reference(request.user.id),
         )
 

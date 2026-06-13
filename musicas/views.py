@@ -75,8 +75,8 @@ def user_can_access_music(user, codigo):
 
 def limit_reached_response(request, json_response=False):
     message = (
-        "Voce ja usou suas musicas iniciais. "
-        "Para continuar cantando, faca a contribuicao via Pix."
+        "Voce ja utilizou todas as musicas do periodo de teste gratuito. "
+        "Para continuar, pedimos contribuir com desenvolvimento de nosso site clicando aqui."
     )
     if json_response:
         return JsonResponse(

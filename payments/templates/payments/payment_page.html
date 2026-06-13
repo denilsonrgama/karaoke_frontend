@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Liberar acesso{% endblock %}
 
@@ -18,6 +19,101 @@
   color: #5a2d0c;
   font-weight: 900;
   margin-bottom: 8px;
+}
+
+.payment-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mp-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  padding: 8px 12px;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.mp-trust img {
+  display: block;
+  width: 128px;
+  max-width: 100%;
+  height: auto;
+}
+
+.package-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.package-card {
+  position: relative;
+}
+
+.package-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.package-card label {
+  display: block;
+  min-height: 136px;
+  padding: 16px;
+  border: 2px solid rgba(90,45,12,.18);
+  border-radius: 8px;
+  background: #fffaf3;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.package-card input:checked + label {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13,110,253,.16);
+}
+
+.package-card label:hover {
+  transform: translateY(-1px);
+}
+
+.package-hours {
+  color: #5a2d0c;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.package-price {
+  margin-top: 8px;
+  color: #134e2b;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.package-discount {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e8f6ee;
+  color: #146c43;
+  font-size: .88rem;
+  font-weight: 800;
+}
+
+.payment-note {
+  padding: 12px 14px;
+  border-left: 4px solid #0d6efd;
+  border-radius: 6px;
+  background: #f4f8ff;
+  color: #26364d;
 }
 
 .pix-code {
@@ -40,14 +136,38 @@
   padding: 10px;
   background: #fff;
 }
+
+@media (max-width: 640px) {
+  .payment-header {
+    display: block;
+  }
+
+  .mp-trust {
+    margin-top: 12px;
+    justify-content: flex-start;
+  }
+
+  .package-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 
 <div class="payment-shell">
-  <h1>Liberar acesso</h1>
-  <p>
-    Contribua com <strong>R$ {{ site_config.contribution_amount }}</strong> e libere o karaoke por
-    <strong>{{ site_config.paid_access_hours }} horas</strong>.
-  </p>
+  <div class="payment-header">
+    <div>
+      <h1>Liberar acesso</h1>
+      <p>
+        Escolha quantas horas deseja liberar. O primeiro pacote custa
+        <strong>R$ {{ site_config.contribution_amount }}</strong> por
+        <strong>{{ site_config.paid_access_hours }} horas</strong>; a cada novo bloco de
+        {{ site_config.paid_access_hours }} horas no mesmo Pix, voce recebe R$ 1 de desconto no bloco seguinte.
+      </p>
+    </div>
+    <div class="mp-trust" aria-label="Pagamento seguro via Mercado Pago">
+      <img src="{% static 'payments/mercado-pago.svg' %}" alt="Mercado Pago">
+    </div>
+  </div>
 
   {% if request.user.access_expires_at %}
     <div class="alert alert-success">
@@ -57,7 +177,9 @@
 
   {% if payment and payment.qr_code %}
     <div class="alert alert-info" id="paymentStatus">
-      Pagamento aguardando Pix. Assim que for aprovado, seu acesso sera liberado automaticamente.
+      Pix de <strong>R$ {{ payment.amount }}</strong> para liberar
+      <strong>{{ payment.access_hours }} horas</strong> aguardando pagamento. Assim que for aprovado,
+      seu acesso sera liberado automaticamente.
     </div>
 
     {% if payment.qr_code_base64 %}
@@ -78,6 +200,31 @@
   {% else %}
     <form method="post" action="{% url 'payments:create_payment' %}">
       {% csrf_token %}
+      <div class="package-grid">
+        {% for option in package_options %}
+          <div class="package-card">
+            <input
+              type="radio"
+              name="package_blocks"
+              id="package{{ option.blocks }}"
+              value="{{ option.blocks }}"
+              {% if forloop.first %}checked{% endif %}
+            >
+            <label for="package{{ option.blocks }}">
+              <div class="package-hours">{{ option.hours }} horas</div>
+              <div class="package-price">R$ {{ option.amount }}</div>
+              {% if option.discount > 0 %}
+                <span class="package-discount">Economia de R$ {{ option.discount }}</span>
+              {% else %}
+                <span class="package-discount">Pacote inicial</span>
+              {% endif %}
+            </label>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="payment-note mb-3">
+        Caso queira cantar por mais tempo, escolha um pacote maior agora. O credito sera somado ao acesso que ainda estiver ativo.
+      </div>
       <button type="submit" class="btn btn-success btn-lg">Gerar Pix</button>
     </form>
   {% endif %}

@@ -90,11 +90,13 @@
 
     {% if not access_released %}
         <div class="alert alert-warning text-center" style="font-weight: 700;">
-            Seu cadastro inicial permite cantar {{ song_limit }} musicas.
-            Restam {{ songs_remaining }}.
             {% if songs_remaining == 0 %}
-                <a href="{% url 'payments:payment_page' %}" class="alert-link">Faca a contribuicao via Pix para continuar.</a>
+                Voce ja utilizou todas as musicas do periodo de teste gratuito.
+                Para continuar, pedimos contribuir com desenvolvimento de nosso site
+                <a href="{% url 'payments:payment_page' %}" class="alert-link">clicando aqui</a>.
             {% else %}
+                Seu cadastro inicial permite cantar {{ song_limit }} musicas.
+                Restam {{ songs_remaining }}.
                 Depois disso, sera necessario contribuir via Pix para liberar mais tempo.
             {% endif %}
         </div>
