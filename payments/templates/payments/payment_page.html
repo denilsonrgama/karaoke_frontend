@@ -158,10 +158,10 @@
     <div>
       <h1>Liberar acesso</h1>
       <p>
-        Escolha quantas horas deseja liberar. O primeiro pacote custa
+        Escolha quantas hora(s) deseja liberar. O primeiro pacote custa
         <strong>R$ {{ site_config.contribution_amount }}</strong> por
-        <strong>{{ site_config.paid_access_hours }} horas</strong>; a cada novo bloco de
-        {{ site_config.paid_access_hours }} horas no mesmo Pix, voce recebe R$ 1 de desconto no bloco seguinte.
+        <strong>{{ site_config.paid_access_hours }} hora(s)</strong>; a cada novo bloco de
+        {{ site_config.paid_access_hours }} hora(s) no mesmo Pix, voce recebe R$ 1 de desconto no bloco seguinte.
       </p>
     </div>
     <div class="mp-trust" aria-label="Pagamento seguro via Mercado Pago">
@@ -178,7 +178,7 @@
   {% if payment and payment.qr_code %}
     <div class="alert alert-info" id="paymentStatus">
       Pix de <strong>R$ {{ payment.amount }}</strong> para liberar
-      <strong>{{ payment.access_hours }} horas</strong> aguardando pagamento. Assim que for aprovado,
+      <strong>{{ payment.access_hours }} hora(s)</strong> aguardando pagamento. Assim que for aprovado,
       seu acesso sera liberado automaticamente.
     </div>
 
@@ -211,7 +211,7 @@
               {% if forloop.first %}checked{% endif %}
             >
             <label for="package{{ option.blocks }}">
-              <div class="package-hours">{{ option.hours }} horas</div>
+              <div class="package-hours">{{ option.hours }} hora(s)</div>
               <div class="package-price">R$ {{ option.amount }}</div>
               {% if option.discount > 0 %}
                 <span class="package-discount">Economia de R$ {{ option.discount }}</span>
