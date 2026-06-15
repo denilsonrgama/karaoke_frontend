@@ -203,6 +203,10 @@
         font-weight: 800;
     }
 
+    .search-button-text-mobile {
+        display: none;
+    }
+
     .results-bar {
         display: flex;
         align-items: center;
@@ -341,6 +345,39 @@
             padding: 16px;
         }
 
+        .content-panel {
+            display: grid;
+        }
+
+        .page-header {
+            order: 1;
+        }
+
+        .search-panel {
+            order: 2;
+        }
+
+        .access-alert {
+            order: 3;
+        }
+
+        .results-bar {
+            order: 4;
+        }
+
+        .music-grid,
+        .empty-state {
+            order: 5;
+        }
+
+        .pagination-wrap {
+            order: 6;
+        }
+
+        .status-grid {
+            order: 7;
+        }
+
         .header-actions {
             justify-content: flex-start;
             margin-top: 12px;
@@ -368,6 +405,19 @@
 
         .results-bar {
             display: block;
+        }
+
+        .search-form .btn {
+            min-height: 48px;
+            font-size: 1rem;
+        }
+
+        .search-button-text-default {
+            display: none;
+        }
+
+        .search-button-text-mobile {
+            display: inline;
         }
     }
 </style>
@@ -455,7 +505,10 @@
                 <input type="text" name="codigo" value="{{ request.GET.codigo }}" class="form-control" placeholder="Codigo">
                 <input type="text" name="artista" value="{{ artista }}" class="form-control" placeholder="Artista">
                 <input type="text" name="nome" value="{{ nome }}" class="form-control" placeholder="Nome da musica">
-                <button type="submit" class="btn btn-primary">Buscar</button>
+                <button type="submit" class="btn btn-primary">
+                    <span class="search-button-text-default">Buscar</span>
+                    <span class="search-button-text-mobile">Pesquisar musicas</span>
+                </button>
             </form>
         </section>
 
