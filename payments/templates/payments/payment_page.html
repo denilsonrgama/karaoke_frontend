@@ -1,57 +1,154 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Liberar acesso{% endblock %}
+{% block title %}Liberar acesso - Karaoke do Cowboy{% endblock %}
 
 {% block content %}
 <style>
-.payment-shell {
-  max-width: 760px;
-  margin: 0 auto 48px;
-  background: #fff;
-  border: 1px solid rgba(90,45,12,.18);
-  border-radius: 8px;
-  padding: 22px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+body {
+  background: #f3f6f8;
+  color: #26323f;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-.payment-shell h1 {
-  color: #5a2d0c;
+.payment-dashboard {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  gap: 18px;
+  max-width: 1220px;
+  margin: 0 auto 48px;
+}
+
+.side-panel,
+.payment-panel,
+.package-card label,
+.payment-summary,
+.qr-panel {
+  background: #fff;
+  border: 1px solid #dce5ec;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(23, 43, 77, .06);
+}
+
+.side-panel {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  overflow: hidden;
+}
+
+.brand-block {
+  padding: 18px;
+  border-bottom: 1px solid #dce5ec;
+  background: #fbfdff;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #fff;
+  font-size: 1.45rem;
   font-weight: 900;
-  margin-bottom: 8px;
+}
+
+.brand-title {
+  margin: 0;
+  color: #26323f;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.brand-subtitle {
+  margin: 4px 0 0;
+  color: #6c7a89;
+  font-size: .85rem;
+  font-weight: 700;
+}
+
+.side-nav {
+  padding: 10px;
+}
+
+.side-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  color: #4b5b6a;
+  border-radius: 6px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.side-nav a.active,
+.side-nav a:hover {
+  color: #fff;
+  background: #0f8fcf;
+}
+
+.payment-panel {
+  overflow: hidden;
 }
 
 .payment-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 18px;
+  padding: 20px;
+  border-bottom: 1px solid #dce5ec;
+  background: #fbfdff;
+}
+
+.payment-title {
+  margin: 0;
+  color: #25313d;
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.payment-subtitle {
+  margin: 5px 0 0;
+  max-width: 760px;
+  color: #6c7a89;
+  font-weight: 700;
 }
 
 .mp-trust {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 150px;
-  padding: 8px 12px;
-  border: 1px solid rgba(0,0,0,.08);
+  min-width: 160px;
+  padding: 10px 12px;
+  border: 1px solid #dce5ec;
   border-radius: 8px;
-  background: #f8fbff;
+  background: #fff;
 }
 
 .mp-trust img {
   display: block;
-  width: 128px;
+  width: 132px;
   max-width: 100%;
   height: auto;
+}
+
+.payment-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  padding: 20px;
 }
 
 .package-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin: 18px 0;
 }
 
 .package-card {
@@ -68,16 +165,13 @@
   display: block;
   min-height: 136px;
   padding: 16px;
-  border: 2px solid rgba(90,45,12,.18);
-  border-radius: 8px;
-  background: #fffaf3;
   cursor: pointer;
   transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 
 .package-card input:checked + label {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 3px rgba(13,110,253,.16);
+  border-color: #0f8fcf;
+  box-shadow: 0 0 0 3px rgba(15,143,207,.16);
 }
 
 .package-card label:hover {
@@ -85,35 +179,59 @@
 }
 
 .package-hours {
-  color: #5a2d0c;
+  color: #25313d;
   font-size: 1.25rem;
   font-weight: 900;
 }
 
 .package-price {
   margin-top: 8px;
-  color: #134e2b;
-  font-size: 1.1rem;
-  font-weight: 800;
+  color: #17613a;
+  font-size: 1.15rem;
+  font-weight: 900;
 }
 
 .package-discount {
   display: inline-block;
   margin-top: 10px;
-  padding: 4px 8px;
+  padding: 5px 9px;
   border-radius: 999px;
-  background: #e8f6ee;
-  color: #146c43;
-  font-size: .88rem;
-  font-weight: 800;
+  background: #ecf8f1;
+  color: #17613a;
+  font-size: .86rem;
+  font-weight: 900;
+}
+
+.payment-summary {
+  padding: 16px;
+}
+
+.summary-label {
+  color: #6c7a89;
+  font-size: .78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.summary-value {
+  margin: 5px 0 14px;
+  color: #25313d;
+  font-size: 1.05rem;
+  font-weight: 900;
 }
 
 .payment-note {
+  margin-top: 12px;
   padding: 12px 14px;
-  border-left: 4px solid #0d6efd;
-  border-radius: 6px;
-  background: #f4f8ff;
-  color: #26364d;
+  border-left: 5px solid #0f8fcf;
+  border-radius: 8px;
+  background: #eef7fc;
+  color: #25313d;
+  font-weight: 800;
+}
+
+.qr-panel {
+  padding: 18px;
 }
 
 .pix-code {
@@ -131,20 +249,66 @@
 .qr-box img {
   width: min(280px, 100%);
   height: auto;
-  border: 1px solid #ddd;
+  border: 1px solid #dce5ec;
   border-radius: 8px;
   padding: 10px;
   background: #fff;
 }
 
+@media (max-width: 992px) {
+  .payment-dashboard,
+  .payment-body {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    position: static;
+  }
+
+  .side-nav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .side-nav a {
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 640px) {
+  .payment-dashboard {
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .brand-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 0;
+    font-size: 1.15rem;
+  }
+
   .payment-header {
     display: block;
+    padding: 16px;
   }
 
   .mp-trust {
-    margin-top: 12px;
     justify-content: flex-start;
+    width: fit-content;
+    margin-top: 12px;
+  }
+
+  .payment-body {
+    padding: 14px;
   }
 
   .package-grid {
@@ -153,83 +317,127 @@
 }
 </style>
 
-<div class="payment-shell">
-  <div class="payment-header">
-    <div>
-      <h1>Liberar acesso</h1>
-      <p>
-        Escolha quantas hora(s) deseja liberar. O primeiro pacote custa
-        <strong>R$ {{ site_config.contribution_amount }}</strong> por
-        <strong>{{ site_config.paid_access_hours }} hora(s)</strong>; a cada novo bloco de
-        {{ site_config.paid_access_hours }} hora(s) no mesmo Pix, voce recebe R$ 1 de desconto no bloco seguinte.
-      </p>
+<div class="payment-dashboard">
+  <aside class="side-panel">
+    <div class="brand-block">
+      <div class="brand-mark">KC</div>
+      <div>
+        <h1 class="brand-title">Karaoke do Cowboy</h1>
+        <p class="brand-subtitle">Liberar acesso</p>
+      </div>
     </div>
-    <div class="mp-trust" aria-label="Pagamento seguro via Mercado Pago">
-      <img src="{% static 'payments/mercado-pago.svg' %}" alt="Mercado Pago">
-    </div>
-  </div>
+    <nav class="side-nav" aria-label="Navegacao do pagamento">
+      <a href="{% url 'lista_musicas' %}">Buscar <span>&rsaquo;</span></a>
+      <a class="active" href="{% url 'payments:payment_page' %}">Meu acesso <span>&rsaquo;</span></a>
+      {% if user.is_staff %}
+        <a href="{% url 'site_admin' %}">Admin <span>&rsaquo;</span></a>
+      {% endif %}
+      <a href="{% url 'password_change' %}">Senha <span>&rsaquo;</span></a>
+    </nav>
+  </aside>
 
-  {% if request.user.access_expires_at %}
-    <div class="alert alert-success">
-      Seu acesso pago esta liberado ate {{ request.user.access_expires_at|date:"d/m/Y H:i" }}.
-    </div>
-  {% endif %}
+  <main class="payment-panel">
+    <header class="payment-header">
+      <div>
+        <h2 class="payment-title">Comprar hora(s)</h2>
+        <p class="payment-subtitle">
+          Escolha quantas hora(s) deseja liberar. O primeiro pacote custa
+          <strong>R$ {{ site_config.contribution_amount }}</strong> por
+          <strong>{{ site_config.paid_access_hours }} hora(s)</strong>; a cada novo bloco de
+          {{ site_config.paid_access_hours }} hora(s) no mesmo Pix, voce recebe R$ 1 de desconto no bloco seguinte.
+        </p>
+      </div>
+      <div class="mp-trust" aria-label="Pagamento seguro via Mercado Pago">
+        <img src="{% static 'payments/mercado-pago.svg' %}" alt="Mercado Pago">
+      </div>
+    </header>
 
-  {% if payment and payment.qr_code %}
-    <div class="alert alert-info" id="paymentStatus">
-      Pix de <strong>R$ {{ payment.amount }}</strong> para liberar
-      <strong>{{ payment.access_hours }} hora(s)</strong> aguardando pagamento. Assim que for aprovado,
-      seu acesso sera liberado automaticamente.
-    </div>
-
-    {% if payment.qr_code_base64 %}
-      <div class="qr-box">
-        <img alt="QR Code Pix" src="data:image/png;base64,{{ payment.qr_code_base64 }}">
+    {% if request.user.access_expires_at %}
+      <div class="alert alert-success m-3 mb-0">
+        Seu acesso pago esta liberado ate {{ request.user.access_expires_at|date:"d/m/Y H:i" }}.
       </div>
     {% endif %}
 
-    <label class="form-label fw-bold" for="pixCode">Pix copia e cola</label>
-    <textarea id="pixCode" class="form-control pix-code" readonly>{{ payment.qr_code }}</textarea>
-    <button type="button" class="btn btn-outline-primary mt-2" id="copyPix">Copiar codigo Pix</button>
-
-    {% if payment.ticket_url %}
-      <a class="btn btn-outline-secondary mt-2" href="{{ payment.ticket_url }}" target="_blank" rel="noopener">
-        Abrir no Mercado Pago
-      </a>
-    {% endif %}
-  {% else %}
-    <form method="post" action="{% url 'payments:create_payment' %}">
-      {% csrf_token %}
-      <div class="package-grid">
-        {% for option in package_options %}
-          <div class="package-card">
-            <input
-              type="radio"
-              name="package_blocks"
-              id="package{{ option.blocks }}"
-              value="{{ option.blocks }}"
-              {% if forloop.first %}checked{% endif %}
-            >
-            <label for="package{{ option.blocks }}">
-              <div class="package-hours">{{ option.hours }} hora(s)</div>
-              <div class="package-price">R$ {{ option.amount }}</div>
-              {% if option.discount > 0 %}
-                <span class="package-discount">Economia de R$ {{ option.discount }}</span>
-              {% else %}
-                <span class="package-discount">Pacote inicial</span>
-              {% endif %}
-            </label>
+    {% if payment and payment.qr_code %}
+      <section class="payment-body">
+        <div class="qr-panel">
+          <div class="alert alert-info" id="paymentStatus">
+            Pix de <strong>R$ {{ payment.amount }}</strong> para liberar
+            <strong>{{ payment.access_hours }} hora(s)</strong> aguardando pagamento. Assim que for aprovado,
+            seu acesso sera liberado automaticamente.
           </div>
-        {% endfor %}
-      </div>
-      <div class="payment-note mb-3">
-        Caso queira cantar por mais tempo, escolha um pacote maior agora. O credito sera somado ao acesso que ainda estiver ativo.
-      </div>
-      <button type="submit" class="btn btn-success btn-lg">Gerar Pix</button>
-    </form>
-  {% endif %}
 
-  <a class="btn btn-link mt-3" href="{% url 'lista_musicas' %}">Voltar para lista</a>
+          {% if payment.qr_code_base64 %}
+            <div class="qr-box">
+              <img alt="QR Code Pix" src="data:image/png;base64,{{ payment.qr_code_base64 }}">
+            </div>
+          {% endif %}
+
+          <label class="form-label fw-bold" for="pixCode">Pix copia e cola</label>
+          <textarea id="pixCode" class="form-control pix-code" readonly>{{ payment.qr_code }}</textarea>
+          <button type="button" class="btn btn-outline-primary mt-2" id="copyPix">Copiar codigo Pix</button>
+
+          {% if payment.ticket_url %}
+            <a class="btn btn-outline-secondary mt-2" href="{{ payment.ticket_url }}" target="_blank" rel="noopener">
+              Abrir no Mercado Pago
+            </a>
+          {% endif %}
+        </div>
+
+        <aside class="payment-summary">
+          <div class="summary-label">Status</div>
+          <div class="summary-value">Aguardando Pix</div>
+          <div class="summary-label">Valor</div>
+          <div class="summary-value">R$ {{ payment.amount }}</div>
+          <div class="summary-label">Liberacao</div>
+          <div class="summary-value">{{ payment.access_hours }} hora(s)</div>
+          <div class="payment-note">A aprovacao pelo Mercado Pago libera o acesso automaticamente.</div>
+        </aside>
+      </section>
+    {% else %}
+      <section class="payment-body">
+        <form method="post" action="{% url 'payments:create_payment' %}">
+          {% csrf_token %}
+          <div class="package-grid">
+            {% for option in package_options %}
+              <div class="package-card">
+                <input
+                  type="radio"
+                  name="package_blocks"
+                  id="package{{ option.blocks }}"
+                  value="{{ option.blocks }}"
+                  {% if forloop.first %}checked{% endif %}
+                >
+                <label for="package{{ option.blocks }}">
+                  <div class="package-hours">{{ option.hours }} hora(s)</div>
+                  <div class="package-price">R$ {{ option.amount }}</div>
+                  {% if option.discount > 0 %}
+                    <span class="package-discount">Economia de R$ {{ option.discount }}</span>
+                  {% else %}
+                    <span class="package-discount">Pacote inicial</span>
+                  {% endif %}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="payment-note mb-3">
+            Caso queira cantar por mais tempo, escolha um pacote maior agora. O credito sera somado ao acesso que ainda estiver ativo.
+          </div>
+          <button type="submit" class="btn btn-success btn-lg fw-bold">Gerar Pix</button>
+        </form>
+
+        <aside class="payment-summary">
+          <div class="summary-label">Pagamento</div>
+          <div class="summary-value">Pix via Mercado Pago</div>
+          <div class="summary-label">Liberacao</div>
+          <div class="summary-value">Automatica</div>
+          <div class="summary-label">Credito</div>
+          <div class="summary-value">Somado ao tempo ativo</div>
+          <div class="payment-note">Depois de pagar, esta tela acompanha a aprovacao e retorna para a lista.</div>
+        </aside>
+      </section>
+    {% endif %}
+  </main>
 </div>
 
 {% if payment %}

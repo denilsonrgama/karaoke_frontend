@@ -461,6 +461,7 @@ def detalhe_musica(request, codigo):
         "next_url": next_url,
     }
     context.update(user_usage_context(request.user))
+    context.update(paid_access_context(request.user))
 
     return render(
         request,
