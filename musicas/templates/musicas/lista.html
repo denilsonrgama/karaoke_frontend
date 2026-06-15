@@ -1,227 +1,500 @@
-<!-- lista.html - Ultimate Cowboy™ Cinemático com Poeira -->
-
 {% extends "base.html" %}
-{% block title %}Home — Karaokê{% endblock %}
+
+{% block title %}Buscar musicas - Karaoke do Cowboy{% endblock %}
+
 {% block content %}
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎵 Karaoke do Cowboy™ - Lista de Músicas</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
 <style>
     body {
-        font-family: 'Georgia', serif;
+        background: #f3f6f8;
+        color: #26323f;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .karaoke-dashboard {
+        display: grid;
+        grid-template-columns: 224px minmax(0, 1fr);
+        gap: 18px;
+        max-width: 1220px;
+        margin: 0 auto 48px;
+    }
+
+    .side-panel,
+    .content-panel,
+    .status-card,
+    .music-card {
+        background: #fff;
+        border: 1px solid #dce5ec;
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgba(23, 43, 77, .06);
+    }
+
+    .side-panel {
+        position: sticky;
+        top: 96px;
+        align-self: start;
+        overflow: hidden;
+    }
+
+    .brand-block {
+        padding: 18px;
+        border-bottom: 1px solid #dce5ec;
+        background: #fbfdff;
+    }
+
+    .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 54px;
+        height: 54px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #0f766e, #2563eb);
+        color: #fff;
+        font-size: 1.45rem;
+        font-weight: 900;
+    }
+
+    .brand-title {
         margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-        animation: sunsetBG 30s ease-in-out infinite alternate;
-        background: linear-gradient(180deg, #fff8f0 0%, #fcd09b 50%, #f4a261 100%);
+        color: #26323f;
+        font-size: 1rem;
+        font-weight: 900;
     }
 
-    @keyframes sunsetBG {
-        0% { background: linear-gradient(180deg, #fff8f0 0%, #fcd09b 50%, #f4a261 100%); }
-        50% { background: linear-gradient(180deg, #fff3e0 0%, #fbc788 50%, #f4974e 100%); }
-        100% { background: linear-gradient(180deg, #ffe8d6 0%, #fbbf70 50%, #f48c42 100%); }
+    .brand-subtitle {
+        margin: 4px 0 0;
+        color: #6c7a89;
+        font-size: .85rem;
+        font-weight: 700;
     }
 
-    h1 {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 1.5rem;
-        color: #8b4513;
-        text-shadow: 1px 1px #ffd700;
+    .side-nav {
+        padding: 10px;
+    }
+
+    .side-nav a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        color: #4b5b6a;
+        border-radius: 6px;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    .side-nav a.active,
+    .side-nav a:hover {
+        color: #fff;
+        background: #0f8fcf;
+    }
+
+    .content-panel {
+        overflow: hidden;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 20px;
+        border-bottom: 1px solid #dce5ec;
+        background: #fbfdff;
+    }
+
+    .page-title {
+        margin: 0;
+        color: #25313d;
+        font-size: 1.55rem;
+        font-weight: 900;
+    }
+
+    .page-kicker {
+        margin: 5px 0 0;
+        color: #6c7a89;
+        font-weight: 700;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        padding: 16px 20px 0;
+    }
+
+    .status-card {
+        padding: 14px;
+        min-height: 104px;
+    }
+
+    .status-label {
+        color: #6c7a89;
+        font-size: .82rem;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .status-value {
+        margin-top: 8px;
+        color: #25313d;
+        font-size: 1.35rem;
+        font-weight: 900;
+        line-height: 1.15;
+    }
+
+    .status-note {
+        margin-top: 6px;
+        color: #6c7a89;
+        font-size: .88rem;
+        font-weight: 700;
+    }
+
+    .status-card.success { border-left: 5px solid #198754; }
+    .status-card.warning { border-left: 5px solid #f0ad4e; }
+    .status-card.info { border-left: 5px solid #0f8fcf; }
+
+    .search-panel {
+        padding: 20px;
+    }
+
+    .search-form {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) 132px;
+        gap: 10px;
+        align-items: end;
+    }
+
+    .search-form .form-control {
+        min-height: 44px;
+        border-color: #cbd8e2;
+        font-weight: 700;
+    }
+
+    .search-form .btn {
+        min-height: 44px;
+        font-weight: 900;
+    }
+
+    .access-alert {
+        margin: 16px 20px 0;
+        border-radius: 8px;
+        font-weight: 800;
+    }
+
+    .results-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 20px 14px;
+        color: #526170;
+        font-weight: 800;
+    }
+
+    .music-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        padding: 0 20px 20px;
+    }
+
+    .music-link {
+        display: block;
+        height: 100%;
+        text-decoration: none;
+    }
+
+    .music-card {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 12px;
+        height: 100%;
+        padding: 14px;
+        transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+
+    .music-link:hover .music-card {
+        border-color: #0f8fcf;
+        box-shadow: 0 12px 24px rgba(15, 143, 207, .14);
+        transform: translateY(-1px);
+    }
+
+    .music-code {
+        display: grid;
+        place-items: center;
+        min-width: 58px;
+        height: 58px;
+        border-radius: 8px;
+        background: #eef7fc;
+        color: #0b6f9f;
+        font-size: .92rem;
+        font-weight: 900;
+    }
+
+    .music-name {
+        color: #25313d;
+        font-size: 1rem;
+        font-weight: 900;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .music-artist {
+        margin-top: 6px;
+        color: #6c7a89;
+        font-size: .9rem;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .empty-state {
+        margin: 0 20px 20px;
+        padding: 22px;
+        border: 1px dashed #b8c7d3;
+        border-radius: 8px;
+        background: #fbfdff;
+        color: #526170;
+        font-weight: 800;
         text-align: center;
     }
 
-    .musica-card {
-        background: linear-gradient(135deg, #e0cda9 0%, #d2a679 25%, #c68642 50%, #d2a679 75%, #e0cda9 100%);
-        border: 2px solid #8b4513;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        position: relative;
-        box-shadow: inset 0 0 8px rgba(0,0,0,0.15);
-        animation: cardGlow 3s ease-in-out infinite alternate;
-        height: 100%;
+    .pagination-wrap {
+        padding: 0 20px 22px;
     }
 
-    @keyframes cardGlow {
-        0% { box-shadow: inset 0 0 8px rgba(0,0,0,0.15); }
-        100% { box-shadow: 0 0 15px rgba(255,215,0,0.5); }
-    }
+    @media (max-width: 992px) {
+        .karaoke-dashboard {
+            grid-template-columns: 1fr;
+        }
 
-    .musica-icon {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        font-size: 1.5rem;
-        color: #ffd700;
-        text-shadow: 0 0 2px #8b4513;
-    }
+        .side-panel {
+            position: static;
+        }
 
-    .musica-codigo { font-weight: bold; color: #5a2d0c; }
-    .musica-nome { font-size: 1rem; font-weight: bold; color: #3e1f0d; }
-    .musica-artista { font-size: 0.85rem; color: #4b2e1b; }
+        .side-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
 
-    #dustCanvas {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 0;
-    }
+        .side-nav a {
+            white-space: nowrap;
+        }
 
-    .container { position: relative; z-index: 1; }
+        .status-grid,
+        .music-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
 
-    @media (max-width: 576px) {
-        .musica-card { animation: none; }
-    }
-</style>
-</head>
-
-<body>
-<canvas id="dustCanvas"></canvas>
-
-<div class="container mt-4">
-    <h1>🎵 Karaoke do Cowboy™</h1>
-
-    {% if not access_released %}
-        <div class="alert alert-warning text-center" style="font-weight: 700;">
-            {% if songs_remaining == 0 %}
-                Voce ja utilizou todas as musicas do periodo de teste gratuito.
-                Para continuar, pedimos contribuir com desenvolvimento de nosso site
-                <a href="{% url 'payments:payment_page' %}" class="alert-link">clicando aqui</a>.
-            {% else %}
-                Seu cadastro inicial permite cantar {{ song_limit }} musicas.
-                Restam {{ songs_remaining }}.
-                Depois disso, sera necessario contribuir via Pix para liberar mais tempo.
-            {% endif %}
-        </div>
-    {% endif %}
-
-    {% if paid_access_active %}
-        <div class="alert alert-success text-center" style="font-weight: 700;">
-            Seu acesso pago esta ativo. Restam {{ paid_access_remaining_label }}.
-            {% if last_paid_package %}
-                Ultimo pacote adquirido: R$ {{ last_paid_package.amount }} por {{ last_paid_package.access_hours }} hora(s).
-            {% endif %}
-            <a href="{% url 'payments:payment_page' %}" class="alert-link">Adquirir mais hora(s)</a>.
-        </div>
-    {% endif %}
-
-    <form method="get" class="row g-2 mb-4">
-        <div class="col-12 col-sm-6 col-md-3">
-            <input type="text" name="codigo" value="{{ request.GET.codigo }}" class="form-control" placeholder="Buscar por Código">
-        </div>
-        <div class="col-12 col-sm-6 col-md-3">
-            <input type="text" name="artista" value="{{ request.GET.artista }}" class="form-control" placeholder="Buscar por Artista">
-        </div>
-        <div class="col-12 col-sm-6 col-md-3">
-            <input type="text" name="nome" value="{{ request.GET.nome }}" class="form-control" placeholder="Buscar por Nome">
-        </div>
-        <div class="col-12 col-sm-6 col-md-3">
-            <button type="submit" class="btn btn-primary w-100">Buscar</button>
-        </div>
-    </form>
-
-    {% if erro %}
-        <div class="alert alert-danger">{{ erro }}</div>
-    {% endif %}
-
-    <div class="row g-3">
-        {% for musica in musicas %}
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-
-                <!-- ✅ LINK CORRIGIDO PARA MODO PALCO -->
-                <a
-                  href="{% url 'detalhe_musica' codigo=musica.codigo %}?next={{ request.get_full_path|urlencode }}"
-                  class="text-decoration-none"
-                >
-                    <div class="musica-card">
-                        <div class="musica-icon">🎵</div>
-                        <div class="musica-codigo">Código: {{ musica.codigo }}</div>
-                        <div class="musica-nome">{{ musica.nome }}</div>
-                        <div class="musica-artista">{{ musica.artista }}</div>
-                    </div>
-                </a>
-
-            </div>
-        {% empty %}
-            <p class="text-muted">Nenhuma música encontrada.</p>
-        {% endfor %}
-    </div>
-
-    <nav class="mt-3">
-        <ul class="pagination justify-content-center flex-wrap">
-            {% if tem_anterior %}
-                <li class="page-item">
-                    <a class="page-link"
-                       href="?page={{ pagina|add:-1 }}&codigo={{ request.GET.codigo }}&artista={{ artista }}&nome={{ nome }}">
-                        ⬅ Anterior
-                    </a>
-                </li>
-            {% endif %}
-            {% if tem_proxima %}
-                <li class="page-item">
-                    <a class="page-link"
-                       href="?page={{ pagina|add:1 }}&codigo={{ request.GET.codigo }}&artista={{ artista }}&nome={{ nome }}">
-                        Próxima ➡
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-const canvas = document.getElementById('dustCanvas');
-const ctx = canvas.getContext('2d');
-
-function resize(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', resize);
-
-class Dust {
-    constructor(){
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.r = Math.random() * 2 + 1;
-        this.s = Math.random() * 0.4 + 0.1;
-        this.a = Math.random() * 0.5 + 0.3;
-    }
-    update(){
-        this.y -= this.s;
-        if(this.y < 0){
-            this.y = canvas.height;
-            this.x = Math.random() * canvas.width;
+        .search-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
-    draw(){
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${this.a})`;
-        ctx.fill();
+
+    @media (max-width: 640px) {
+        .karaoke-dashboard {
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        .brand-mark {
+            margin-bottom: 0;
+            width: 44px;
+            height: 44px;
+            font-size: 1.15rem;
+        }
+
+        .side-nav {
+            padding: 8px;
+        }
+
+        .page-header {
+            display: block;
+            padding: 16px;
+        }
+
+        .header-actions {
+            justify-content: flex-start;
+            margin-top: 12px;
+        }
+
+        .status-grid,
+        .search-form,
+        .music-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .status-grid,
+        .search-panel,
+        .results-bar,
+        .music-grid,
+        .pagination-wrap {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .access-alert {
+            margin-left: 14px;
+            margin-right: 14px;
+        }
+
+        .results-bar {
+            display: block;
+        }
     }
-}
+</style>
 
-const dust = Array.from({length:120}, () => new Dust());
+<div class="karaoke-dashboard">
+    <aside class="side-panel">
+        <div class="brand-block">
+            <div class="brand-mark">KC</div>
+            <div>
+                <h1 class="brand-title">Karaoke do Cowboy</h1>
+                <p class="brand-subtitle">Painel de musicas</p>
+            </div>
+        </div>
+        <nav class="side-nav" aria-label="Navegacao da lista">
+            <a class="active" href="{% url 'lista_musicas' %}">Buscar <span>&rsaquo;</span></a>
+            <a href="{% url 'payments:payment_page' %}">Meu acesso <span>&rsaquo;</span></a>
+            {% if user.is_staff %}
+                <a href="{% url 'site_admin' %}">Admin <span>&rsaquo;</span></a>
+            {% endif %}
+            <a href="{% url 'password_change' %}">Senha <span>&rsaquo;</span></a>
+        </nav>
+    </aside>
 
-(function animate(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    dust.forEach(p => { p.update(); p.draw(); });
-    requestAnimationFrame(animate);
-})();
-</script>
+    <main class="content-panel">
+        <header class="page-header">
+            <div>
+                <h2 class="page-title">Buscar musicas</h2>
+                <p class="page-kicker">Pesquise por codigo, artista ou nome da musica.</p>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'payments:payment_page' %}" class="btn btn-outline-primary btn-sm">Comprar hora(s)</a>
+            </div>
+        </header>
 
-</body>
-</html>
+        <section class="status-grid" aria-label="Resumo do acesso">
+            <div class="status-card {% if paid_access_active %}success{% else %}warning{% endif %}">
+                <div class="status-label">Acesso</div>
+                {% if paid_access_active %}
+                    <div class="status-value">Ativo</div>
+                    <div class="status-note">Restam {{ paid_access_remaining_label }}</div>
+                {% elif access_released %}
+                    <div class="status-value">Liberado</div>
+                    <div class="status-note">Acesso manual ativo</div>
+                {% else %}
+                    <div class="status-value">{{ songs_remaining }}</div>
+                    <div class="status-note">musica(s) gratis restantes</div>
+                {% endif %}
+            </div>
 
+            <div class="status-card info">
+                <div class="status-label">Ultimo pacote</div>
+                {% if last_paid_package %}
+                    <div class="status-value">R$ {{ last_paid_package.amount }}</div>
+                    <div class="status-note">{{ last_paid_package.access_hours }} hora(s) adquirida(s)</div>
+                {% else %}
+                    <div class="status-value">Sem Pix</div>
+                    <div class="status-note">Nenhum pacote aprovado ainda</div>
+                {% endif %}
+            </div>
+
+            <div class="status-card info">
+                <div class="status-label">Resultado</div>
+                <div class="status-value">{{ total }}</div>
+                <div class="status-note">musica(s) encontradas</div>
+            </div>
+        </section>
+
+        {% if not access_released %}
+            <div class="alert alert-warning access-alert text-center">
+                {% if songs_remaining == 0 %}
+                    Voce ja utilizou todas as musicas do periodo de teste gratuito.
+                    Para continuar, pedimos contribuir com desenvolvimento de nosso site
+                    <a href="{% url 'payments:payment_page' %}" class="alert-link">clicando aqui</a>.
+                {% else %}
+                    Seu cadastro inicial permite cantar {{ song_limit }} musica(s).
+                    Restam {{ songs_remaining }}. Depois disso, sera necessario contribuir via Pix para liberar mais tempo.
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <section class="search-panel">
+            <form method="get" class="search-form">
+                <input type="text" name="codigo" value="{{ request.GET.codigo }}" class="form-control" placeholder="Codigo">
+                <input type="text" name="artista" value="{{ artista }}" class="form-control" placeholder="Artista">
+                <input type="text" name="nome" value="{{ nome }}" class="form-control" placeholder="Nome da musica">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </section>
+
+        {% if erro %}
+            <div class="alert alert-danger access-alert">{{ erro }}</div>
+        {% endif %}
+
+        <div class="results-bar">
+            <span>Pagina {{ pagina }}</span>
+            <span>{{ total }} resultado(s)</span>
+        </div>
+
+        {% if musicas %}
+            <section class="music-grid" aria-label="Lista de musicas">
+                {% for musica in musicas %}
+                    <a
+                        href="{% url 'detalhe_musica' codigo=musica.codigo %}?next={{ request.get_full_path|urlencode }}"
+                        class="music-link"
+                    >
+                        <article class="music-card">
+                            <div class="music-code">{{ musica.codigo }}</div>
+                            <div>
+                                <div class="music-name">{{ musica.nome }}</div>
+                                <div class="music-artist">{{ musica.artista }}</div>
+                            </div>
+                        </article>
+                    </a>
+                {% endfor %}
+            </section>
+        {% else %}
+            <div class="empty-state">Nenhuma musica encontrada.</div>
+        {% endif %}
+
+        <nav class="pagination-wrap" aria-label="Paginacao">
+            <ul class="pagination justify-content-center flex-wrap">
+                {% if tem_anterior %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ pagina|add:-1 }}&codigo={{ request.GET.codigo }}&artista={{ artista }}&nome={{ nome }}">
+                            Anterior
+                        </a>
+                    </li>
+                {% endif %}
+                {% if tem_proxima %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ pagina|add:1 }}&codigo={{ request.GET.codigo }}&artista={{ artista }}&nome={{ nome }}">
+                            Proxima
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </main>
+</div>
 {% endblock %}
