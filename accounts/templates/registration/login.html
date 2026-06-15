@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-{% load static %}
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -34,18 +33,13 @@
   .brand-logo {
     display: grid;
     place-items: center;
-    width: 118px;
-    height: 82px;
+    width: 72px;
+    height: 72px;
     border: 2px solid rgba(255,255,255,.55);
     border-radius: 8px;
-    background: #000;
-    overflow: hidden;
-  }
-
-  .brand-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    background: rgba(255,255,255,.16);
+    font-size: 1.65rem;
+    font-weight: 900;
   }
 
   .brand-copy h1 {
@@ -179,9 +173,7 @@
 <main class="login-shell">
   <section class="login-brand">
     <div>
-      <div class="brand-logo">
-        <img src="{% static 'musicas/karaoke-logo.jpg' %}" alt="Karaoke do Cowboy">
-      </div>
+      <div class="brand-logo">KC</div>
       <div class="brand-copy">
         <h1>Karaoke do Cowboy</h1>
         <p>Acesse sua conta para buscar musicas, acompanhar seu tempo liberado e continuar cantando.</p>
