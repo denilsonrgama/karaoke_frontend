@@ -18,16 +18,6 @@ from .models import SiteConfiguration, User
 class CustomLoginView(LoginView):
     template_name = "registration/login.html"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        video_base_url = getattr(settings, "VIDEO_BASE_URL", "").rstrip("/")
-        context["hero_background_url"] = (
-            f"{video_base_url}/thumbs/karaoke-background.jpg"
-            if video_base_url
-            else f"{settings.STATIC_URL}media/karaoke/karaoke-background.jpg"
-        )
-        return context
-
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Login realizado com sucesso. Seja bem vindo!")
