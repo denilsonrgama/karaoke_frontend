@@ -1,255 +1,491 @@
-<!-- home.html -->
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}🏜️ Karaoke do Cowboy™ - Home{% endblock %}
+{% block title %}Karaoke do Cowboy - Home{% endblock %}
 
 {% block content %}
 <style>
-body{
-  font-family:'Georgia',serif;
-  margin:0;
-  padding:0;
-  overflow-x:hidden;
-  animation:sunsetBG 30s ease-in-out infinite alternate;
-  background:linear-gradient(180deg,#fff8f0 0%,#fcd09b 50%,#f4a261 100%);
-}
-@keyframes sunsetBG{
-  0%{background:linear-gradient(180deg,#fff8f0 0%,#fcd09b 50%,#f4a261 100%);}
-  50%{background:linear-gradient(180deg,#fff3e0 0%,#fbc788 50%,#f4974e 100%);}
-  100%{background:linear-gradient(180deg,#ffe8d6 0%,#fbbf70 50%,#f48c42 100%);}
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #f3f6f8;
+  color: #26323f;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-#dustCanvas{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  z-index:0;
+.home-shell {
+  min-height: 100vh;
 }
 
-/* wrapper no mesmo espírito do .container */
-.page-wrap{
-  position:relative;
-  z-index:1;
-  max-width:1200px;
-  margin:0 auto;
-  padding:0 12px;
+.home-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 18px 18px 0;
 }
 
-.hero{
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #25313d;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.home-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #fff;
+  font-weight: 900;
+}
+
+.home-nav-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  max-width: 1220px;
+  margin: 18px auto 0;
+  padding: 0 18px 42px;
+}
+
+.hero-panel,
+.ranking-panel,
+.top-song,
+.music-card {
+  border: 1px solid #dce5ec;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(23, 43, 77, .06);
+}
+
+.hero-panel {
+  min-height: 440px;
+  overflow: hidden;
   background:
-    linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),
+    linear-gradient(90deg, rgba(8, 20, 32, .92) 0%, rgba(8, 20, 32, .72) 48%, rgba(8, 20, 32, .18) 100%),
     var(--hero-bg) center/cover no-repeat,
-    linear-gradient(135deg,#4d2610 0%,#8b4513 45%,#d98c3f 100%);
-  color:#fff;
-  text-align:center;
-  border-radius:12px;
-  margin:18px 0 22px;
-  padding:90px 16px;
-  box-shadow:0 10px 26px rgba(0,0,0,.22);
-}
-.hero h1{font-size:2.6rem;font-weight:900;margin-bottom:12px;}
-.hero p{font-size:1.2rem;margin-bottom:20px;}
-.hero .btn{
-  margin:6px;
-  padding:12px 26px;
-  font-size:1.05rem;
-  border-radius:10px;
-  font-weight:800;
-  transition:transform .2s ease,box-shadow .2s ease;
-}
-.hero .btn:hover{
-  transform:translateY(-2px);
-  box-shadow:0 10px 24px rgba(0,0,0,.35);
+    linear-gradient(135deg, #0f766e, #2563eb);
 }
 
-/* mobile */
-@media (max-width:576px){
-  .hero{padding:56px 14px;border-radius:10px;}
-  .hero h1{font-size:2.05rem;}
-  .hero p{font-size:1.05rem;}
-  .hero .btn{
-    display:block;
-    width:100%;
-    max-width:360px;
-    margin:8px auto;
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: min(640px, 100%);
+  min-height: 440px;
+  padding: 42px;
+  color: #fff;
+}
+
+.hero-eyebrow {
+  margin-bottom: 12px;
+  color: rgba(255,255,255,.78);
+  font-size: .86rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 4.6rem);
+  font-weight: 900;
+  line-height: .95;
+}
+
+.hero-copy {
+  max-width: 520px;
+  margin: 18px 0 0;
+  color: rgba(255,255,255,.88);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.hero-actions .btn {
+  min-width: 146px;
+  font-weight: 900;
+}
+
+.ranking-panel {
+  padding: 18px;
+}
+
+.ranking-panel h2 {
+  margin: 0 0 14px;
+  color: #25313d;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.ranking-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ranking-item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #dce5ec;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.ranking-number {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #eef7fc;
+  color: #0b6f9f;
+  font-weight: 900;
+}
+
+.ranking-name {
+  color: #25313d;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.ranking-artist {
+  color: #6c7a89;
+  font-size: .88rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.ranking-count {
+  color: #17613a;
+  font-size: .86rem;
+  font-weight: 900;
+}
+
+.top-song {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-left: 5px solid #198754;
+}
+
+.top-song strong {
+  color: #17613a;
+}
+
+.section-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #25313d;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.section-header p {
+  margin: 4px 0 0;
+  color: #6c7a89;
+  font-weight: 700;
+}
+
+.music-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.music-card {
+  overflow: hidden;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+.music-card:hover {
+  border-color: #0f8fcf;
+  box-shadow: 0 12px 24px rgba(15, 143, 207, .14);
+  transform: translateY(-1px);
+}
+
+.music-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #111;
+}
+
+.music-body {
+  padding: 14px;
+}
+
+.music-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.badge-rank {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eef7fc;
+  color: #0b6f9f;
+  font-size: .86rem;
+  font-weight: 900;
+}
+
+.music-count {
+  color: #17613a;
+  font-weight: 900;
+}
+
+.music-title {
+  color: #25313d;
+  font-size: 1.05rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.music-meta {
+  margin-top: 5px;
+  color: #6c7a89;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.music-card .btn {
+  margin-top: 14px;
+  font-weight: 900;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 22px;
+  border: 1px dashed #b8c7d3;
+  border-radius: 8px;
+  background: #fbfdff;
+  color: #526170;
+  font-weight: 800;
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-panel {
+    order: 3;
+  }
+
+  .music-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.top-song{
-  background:#e6f4ea;
-  border-left:6px solid #198754;
-  padding:14px 16px;
-  border-radius:12px;
-  color:#0f5132;
-  font-weight:700;
-  margin:0 0 18px;
-}
+@media (max-width: 640px) {
+  .home-nav {
+    display: block;
+    padding: 12px 12px 0;
+  }
 
-.music-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:16px;
-  margin:0 0 50px;
-}
+  .home-nav-actions {
+    justify-content: flex-start;
+    margin-top: 12px;
+  }
 
-.music-card{
-  background:#fff;
-  border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-  overflow:hidden;
-  transition:transform .25s ease,box-shadow .25s ease;
-  cursor:pointer;
-}
-.music-card:hover{
-  transform:translateY(-5px);
-  box-shadow:0 10px 26px rgba(0,0,0,.18);
-}
+  .home-grid {
+    gap: 12px;
+    margin-top: 12px;
+    padding: 0 12px 28px;
+  }
 
-.music-thumb{
-  width:100%;
-  height:180px;
-  object-fit:cover;
-  background:#111;
-  display:block;
-}
+  .hero-panel {
+    min-height: 420px;
+    background:
+      linear-gradient(180deg, rgba(8, 20, 32, .92) 0%, rgba(8, 20, 32, .74) 68%, rgba(8, 20, 32, .42) 100%),
+      var(--hero-bg) center/cover no-repeat,
+      linear-gradient(135deg, #0f766e, #2563eb);
+  }
 
-.music-body{padding:12px 14px 14px;}
-.music-title{color:#0d6efd;font-weight:900;margin:4px 0 2px;}
-.music-meta{color:#555;font-weight:700;margin-bottom:10px;}
+  .hero-content {
+    min-height: 420px;
+    padding: 26px;
+  }
 
-.badge-rank{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:.28rem .58rem;
-  border-radius:999px;
-  border:1px solid rgba(139,69,19,.55);
-  background:rgba(255,215,0,.18);
-  color:#5a2d0c;
-  font-weight:900;
-  font-size:.92rem;
-}
+  .hero-actions .btn {
+    width: 100%;
+  }
 
-.btn-west{
-  background:#8b4513;
-  border:none;
-  color:#fff;
-  font-weight:900;
+  .top-song,
+  .section-header {
+    display: block;
+  }
+
+  .music-grid {
+    grid-template-columns: 1fr;
+  }
 }
-.btn-west:hover{background:#6f350f;}
 </style>
 
-<canvas id="dustCanvas"></canvas>
-
-<div class="page-wrap">
-
-  <!-- HERO -->
-  <div class="hero" style="--hero-bg: url('{{ hero_background_url }}');">
-    <h1>🤠 {{ site_config.site_name }}</h1>
-    <p>{{ site_config.hero_subtitle }}</p>
-
-    {% if user.is_authenticated %}
-      <a href="{% url 'lista_musicas' %}" class="btn btn-primary">🎵 Cantar agora</a>
-      <a href="{% url 'accounts:logout' %}" class="btn btn-danger">Sair</a>
-    {% else %}
-      <a href="{% url 'login' %}?next={% url 'home' %}" class="btn btn-success">Entrar</a>
-      <a href="{% url 'accounts:register' %}" class="btn btn-light">Criar conta</a>
-    {% endif %}
-  </div>
-
-  {% if top3 %}
-    <div class="top-song">
-      🔥 <strong>Mais pedida do momento:</strong>
-      {{ top3.0.nome }} — {{ top3.0.artista }}
-      ({{ top3.0.acessos }} pedidos)
-    </div>
-  {% endif %}
-
-  <!-- TOP 3 -->
-  <div class="music-grid">
-    {% for m in top3 %}
+<main class="home-shell">
+  <nav class="home-nav" aria-label="Navegacao principal">
+    <a class="home-brand" href="{% url 'home' %}">
+      <span class="home-brand-mark">KC</span>
+      <span>{{ site_config.site_name }}</span>
+    </a>
+    <div class="home-nav-actions">
       {% if user.is_authenticated %}
-        {% url 'detalhe_musica' m.codigo as detalhe_url %}
+        <a href="{% url 'lista_musicas' %}" class="btn btn-primary btn-sm">Buscar musicas</a>
+        {% if user.is_staff %}
+          <a href="{% url 'site_admin' %}" class="btn btn-outline-secondary btn-sm">Admin</a>
+        {% endif %}
+        <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm">Sair</a>
       {% else %}
-        {% url 'login' as login_url %}
-        {% url 'detalhe_musica' m.codigo as detalhe_next %}
-        {% with detalhe_url=login_url|add:"?next="|add:detalhe_next %}
-        {% endwith %}
+        <a href="{% url 'login' %}?next={% url 'home' %}" class="btn btn-primary btn-sm">Entrar</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary btn-sm">Criar conta</a>
       {% endif %}
+    </div>
+  </nav>
 
-      <div class="music-card" data-href="{{ detalhe_url }}">
-        <!-- THUMB COM FALLBACK -->
-        <img
-          class="music-thumb"
-          src="{{ m.thumb_url }}"
-          alt="{{ m.nome }} - {{ m.artista }}"
-          loading="lazy"
-          onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 640 360%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 x2=%221%22 y1=%220%22 y2=%221%22%3E%3Cstop stop-color=%22%234d2610%22/%3E%3Cstop offset=%221%22 stop-color=%22%23d98c3f%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22640%22 height=%22360%22 fill=%22url(%23g)%22/%3E%3Ctext x=%22320%22 y=%22192%22 text-anchor=%22middle%22 font-family=%22Georgia,serif%22 font-size=%2238%22 fill=%22white%22%3EKaraoke do Cowboy%3C/text%3E%3C/svg%3E';"
-        >
-
-        <div class="music-body">
-          <div class="d-flex justify-content-between mb-2">
-            <span class="badge-rank">
-              {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% else %}🥉{% endif %}
-              Top {{ forloop.counter }}
-            </span>
-            <span class="fw-bold">{{ m.acessos }}</span>
-          </div>
-
-          <div class="music-title">{{ m.nome }}</div>
-          <div class="music-meta">{{ m.artista }}</div>
-          <a class="btn btn-west w-100" href="{% url 'detalhe_musica' m.codigo %}">Ver detalhes</a>
-
+  <section class="home-grid">
+    <div class="hero-panel" style="--hero-bg: url('{{ hero_background_url }}');">
+      <div class="hero-content">
+        <div class="hero-eyebrow">Karaoke online</div>
+        <h1 class="hero-title">{{ site_config.site_name }}</h1>
+        <p class="hero-copy">{{ site_config.hero_subtitle }}</p>
+        <div class="hero-actions">
+          {% if user.is_authenticated %}
+            <a href="{% url 'lista_musicas' %}" class="btn btn-primary btn-lg">Cantar agora</a>
+            <a href="{% url 'payments:payment_page' %}" class="btn btn-light btn-lg">Comprar hora(s)</a>
+          {% else %}
+            <a href="{% url 'login' %}?next={% url 'lista_musicas' %}" class="btn btn-primary btn-lg">Entrar</a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">Criar conta</a>
+          {% endif %}
         </div>
       </div>
-    {% endfor %}
-  </div>
+    </div>
 
-</div>
+    <aside class="ranking-panel">
+      <h2>Ranking do saloon</h2>
+      <div class="ranking-list">
+        {% for m in top3 %}
+          <div class="ranking-item">
+            <div class="ranking-number">{{ forloop.counter }}</div>
+            <div>
+              <div class="ranking-name">{{ m.nome }}</div>
+              <div class="ranking-artist">{{ m.artista }}</div>
+              <div class="ranking-count">{{ m.acessos }} pedido(s)</div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="empty-state">Nenhuma musica no ranking ainda.</div>
+        {% endfor %}
+      </div>
+    </aside>
+
+    {% if top3 %}
+      <div class="top-song">
+        <span>
+          <strong>Mais pedida do momento:</strong>
+          {{ top3.0.nome }} - {{ top3.0.artista }}
+        </span>
+        <span>{{ top3.0.acessos }} pedido(s)</span>
+      </div>
+    {% endif %}
+
+    <div class="section-header">
+      <div>
+        <h2>Mais pedidas</h2>
+        <p>As musicas que estao puxando a fila agora.</p>
+      </div>
+      {% if user.is_authenticated %}
+        <a href="{% url 'lista_musicas' %}" class="btn btn-outline-primary btn-sm">Ver catalogo</a>
+      {% endif %}
+    </div>
+
+    {% if top3 %}
+      <div class="music-grid">
+        {% for m in top3 %}
+          {% if user.is_authenticated %}
+            {% url 'detalhe_musica' m.codigo as detalhe_url %}
+          {% else %}
+            {% url 'detalhe_musica' m.codigo as detalhe_next %}
+            {% url 'login' as detalhe_url %}
+          {% endif %}
+
+          <article class="music-card" data-href="{% if user.is_authenticated %}{{ detalhe_url }}{% else %}{{ detalhe_url }}?next={{ detalhe_next }}{% endif %}">
+            <img
+              class="music-thumb"
+              src="{{ m.thumb_url }}"
+              alt="{{ m.nome }} - {{ m.artista }}"
+              loading="lazy"
+              onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 640 360%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 x2=%221%22 y1=%220%22 y2=%221%22%3E%3Cstop stop-color=%22%230f766e%22/%3E%3Cstop offset=%221%22 stop-color=%22%232563eb%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22640%22 height=%22360%22 fill=%22url(%23g)%22/%3E%3Ctext x=%22320%22 y=%22192%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22 font-size=%2238%22 font-weight=%22900%22 fill=%22white%22%3EKaraoke do Cowboy%3C/text%3E%3C/svg%3E';"
+            >
+            <div class="music-body">
+              <div class="music-topline">
+                <span class="badge-rank">Top {{ forloop.counter }}</span>
+                <span class="music-count">{{ m.acessos }}</span>
+              </div>
+              <div class="music-title">{{ m.nome }}</div>
+              <div class="music-meta">{{ m.artista }}</div>
+              {% if user.is_authenticated %}
+                <a class="btn btn-primary w-100" href="{% url 'detalhe_musica' m.codigo %}">Ver detalhes</a>
+              {% else %}
+                <a class="btn btn-primary w-100" href="{% url 'login' %}?next={% url 'detalhe_musica' m.codigo %}">Entrar para cantar</a>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">Nenhuma musica no ranking ainda.</div>
+    {% endif %}
+  </section>
+</main>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".music-card[data-href]").forEach(card => {
-    card.addEventListener("click", e => {
-      if (e.target.closest("a,button")) return;
+    card.addEventListener("click", event => {
+      if (event.target.closest("a,button")) return;
       window.location.href = card.dataset.href;
     });
   });
 });
-</script>
-
-<script>
-const canvas=document.getElementById('dustCanvas'),ctx=canvas.getContext('2d');
-function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}
-resize();addEventListener('resize',resize);
-class Dust{
-  constructor(){
-    this.x=Math.random()*canvas.width;
-    this.y=Math.random()*canvas.height;
-    this.r=Math.random()*2+1;
-    this.s=Math.random()*0.4+0.1;
-    this.a=Math.random()*0.5+0.3;
-  }
-  update(){
-    this.y-=this.s;
-    if(this.y<0){
-      this.y=canvas.height;
-      this.x=Math.random()*canvas.width;
-    }
-  }
-  draw(){
-    ctx.beginPath();
-    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-    ctx.fillStyle=`rgba(255,255,255,${this.a})`;
-    ctx.fill();
-  }
-}
-const dust=Array.from({length:120},()=>new Dust());
-(function animate(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  dust.forEach(p=>{p.update();p.draw();});
-  requestAnimationFrame(animate);
-})();
 </script>
 {% endblock %}
