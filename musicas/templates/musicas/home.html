@@ -39,12 +39,17 @@ body {
 .home-brand-mark {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
   background: linear-gradient(135deg, #0f766e, #2563eb);
-  color: #fff;
-  font-weight: 900;
+  overflow: hidden;
+}
+
+.home-brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .home-nav-actions {
@@ -365,7 +370,9 @@ body {
 <main class="home-shell">
   <nav class="home-nav" aria-label="Navegacao principal">
     <a class="home-brand" href="{% url 'home' %}">
-      <span class="home-brand-mark">KC</span>
+      <span class="home-brand-mark">
+        <img src="{% static 'musicas/brand/brand-mark-candidate.png' %}" alt="Karaoke do Cowboy">
+      </span>
       <span>{{ site_config.site_name }}</span>
     </a>
     <div class="home-nav-actions">
