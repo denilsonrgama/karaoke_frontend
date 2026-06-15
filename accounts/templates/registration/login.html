@@ -26,7 +26,10 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 34px;
-    background: linear-gradient(145deg, #0f766e, #2563eb);
+    background:
+      linear-gradient(180deg, rgba(8, 20, 32, .9) 0%, rgba(8, 20, 32, .76) 62%, rgba(8, 20, 32, .54) 100%),
+      var(--login-bg) center/cover no-repeat,
+      linear-gradient(145deg, #0f766e, #2563eb);
     color: #fff;
   }
 
@@ -171,7 +174,7 @@
 
 <body>
 <main class="login-shell">
-  <section class="login-brand">
+  <section class="login-brand" style="--login-bg: url('{{ hero_background_url }}');">
     <div>
       <div class="brand-logo">KC</div>
       <div class="brand-copy">
