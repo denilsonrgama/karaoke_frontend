@@ -4,6 +4,11 @@
 
 {% block content %}
 <style>
+body {
+  background: #f6f0e7;
+  color: #2a2118;
+}
+
 .admin-shell {
   max-width: 1120px;
   margin: 0 auto 48px;
@@ -39,9 +44,9 @@
 .metric-card,
 .admin-panel {
   background: #fff;
-  border: 1px solid rgba(90,45,12,.18);
+  border: 1px solid rgba(95,65,24,.18);
   border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  box-shadow: 0 10px 24px rgba(66,43,14,.08);
 }
 
 .metric-card {
@@ -49,7 +54,7 @@
 }
 
 .metric-label {
-  color: #6b5a4b;
+  color: #7c6f61;
   font-weight: 700;
   font-size: .92rem;
 }
@@ -86,6 +91,20 @@
   margin-bottom: 5px;
   color: #4b2e1b;
   font-weight: 800;
+}
+
+.admin-panel input,
+.admin-panel select,
+.admin-panel textarea {
+  border-color: #d8c8ad;
+  background: #fffdf8;
+}
+
+.admin-panel input:focus,
+.admin-panel select:focus,
+.admin-panel textarea:focus {
+  border-color: #b8860b;
+  box-shadow: 0 0 0 .2rem rgba(184,134,11,.17);
 }
 
 .quick-actions {

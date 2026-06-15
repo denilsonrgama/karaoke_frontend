@@ -26,8 +26,8 @@
         z-index: 9999;
         align-items: center;
         justify-content: center;
-        background: rgba(0,0,0,.45);
-        color: #ffd700;
+        background: rgba(0,0,0,.62);
+        color: #f6c343;
         font-weight: bold;
         text-align: center;
         pointer-events: auto;
@@ -50,11 +50,12 @@
         left: 10px;
         z-index: 10000;
         padding: 10px 14px;
-        background: rgba(0,0,0,0.6);
+        background: rgba(21,16,11,0.82);
         color: white;
-        border: none;
+        border: 1px solid rgba(246,195,67,.42);
         border-radius: 6px;
         font-size: 14px;
+        font-weight: 900;
         cursor: pointer;
     }
 
@@ -67,28 +68,29 @@
         align-items: center;
         gap: 8px;
         padding: 8px;
-        background: rgba(0,0,0,0.6);
+        background: rgba(21,16,11,0.82);
+        border: 1px solid rgba(246,195,67,.32);
         border-radius: 8px;
     }
 
     .tone-controls button {
         padding: 8px 10px;
-        background: #8b4513;
-        color: #ffd700;
-        border: 1px solid #ffd700;
+        background: #8f5f12;
+        color: #fff;
+        border: 1px solid #f6c343;
         border-radius: 6px;
         font-weight: bold;
         cursor: pointer;
     }
 
     .tone-controls button.active {
-        background: #5a2d0c;
+        background: #6f4709;
     }
 
     .tone-label {
         min-width: 96px;
         text-align: center;
-        color: #ffd700;
+        color: #f6c343;
         font-weight: bold;
         font-size: 14px;
     }
@@ -100,7 +102,7 @@
         overflow: hidden;
         border-radius: 999px;
         background: rgba(255,255,255,0.25);
-        border: 1px solid #ffd700;
+        border: 1px solid #f6c343;
     }
 
     .tone-progress.active {
@@ -110,7 +112,7 @@
     .tone-progress-bar {
         width: 0%;
         height: 100%;
-        background: linear-gradient(90deg, #198754, #ffd700);
+        background: linear-gradient(90deg, #198754, #f6c343);
         transition: width .35s ease;
     }
 
@@ -126,7 +128,7 @@
 
 </style>
 
-<button class="voltar" id="voltarBtn">⬅ Voltar</button>
+<button class="voltar" id="voltarBtn">Voltar</button>
 
 <div class="tone-controls" aria-label="Controle de tom">
     <button type="button" class="tone-btn" data-tone="-2">-2</button>

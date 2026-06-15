@@ -6,8 +6,8 @@
 {% block content %}
 <style>
 body {
-  background: #f3f6f8;
-  color: #26323f;
+  background: #f6f0e7;
+  color: #2a2118;
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -25,9 +25,9 @@ body {
 .payment-summary,
 .qr-panel {
   background: #fff;
-  border: 1px solid #dce5ec;
+  border: 1px solid rgba(95,65,24,.18);
   border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(23, 43, 77, .06);
+  box-shadow: 0 10px 24px rgba(66, 43, 14, .08);
 }
 
 .side-panel {
@@ -39,8 +39,8 @@ body {
 
 .brand-block {
   padding: 18px;
-  border-bottom: 1px solid #dce5ec;
-  background: #fbfdff;
+  border-bottom: 1px solid #e4d6bd;
+  background: #fffdf8;
 }
 
 .brand-mark {
@@ -50,7 +50,9 @@ body {
   height: 58px;
   margin-bottom: 12px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #0f766e, #2563eb);
+  border: 1px solid rgba(184,134,11,.44);
+  background: #15100b;
+  box-shadow: 0 8px 20px rgba(66,43,14,.16);
   overflow: hidden;
 }
 
@@ -62,14 +64,14 @@ body {
 
 .brand-title {
   margin: 0;
-  color: #26323f;
+  color: #24180d;
   font-size: 1rem;
   font-weight: 900;
 }
 
 .brand-subtitle {
   margin: 4px 0 0;
-  color: #6c7a89;
+  color: #7c6f61;
   font-size: .85rem;
   font-weight: 700;
 }
@@ -84,7 +86,7 @@ body {
   justify-content: space-between;
   gap: 10px;
   padding: 10px 12px;
-  color: #4b5b6a;
+  color: #5b4630;
   border-radius: 6px;
   font-weight: 800;
   text-decoration: none;
@@ -93,7 +95,7 @@ body {
 .side-nav a.active,
 .side-nav a:hover {
   color: #fff;
-  background: #0f8fcf;
+  background: #8f5f12;
 }
 
 .payment-panel {
@@ -106,13 +108,13 @@ body {
   justify-content: space-between;
   gap: 18px;
   padding: 20px;
-  border-bottom: 1px solid #dce5ec;
-  background: #fbfdff;
+  border-bottom: 1px solid #e4d6bd;
+  background: #fffdf8;
 }
 
 .payment-title {
   margin: 0;
-  color: #25313d;
+  color: #24180d;
   font-size: 1.55rem;
   font-weight: 900;
 }
@@ -120,7 +122,7 @@ body {
 .payment-subtitle {
   margin: 5px 0 0;
   max-width: 760px;
-  color: #6c7a89;
+  color: #7c6f61;
   font-weight: 700;
 }
 
@@ -130,7 +132,7 @@ body {
   justify-content: center;
   min-width: 160px;
   padding: 10px 12px;
-  border: 1px solid #dce5ec;
+  border: 1px solid #e4d6bd;
   border-radius: 8px;
   background: #fff;
 }
@@ -174,8 +176,8 @@ body {
 }
 
 .package-card input:checked + label {
-  border-color: #0f8fcf;
-  box-shadow: 0 0 0 3px rgba(15,143,207,.16);
+  border-color: #b8860b;
+  box-shadow: 0 0 0 3px rgba(184,134,11,.17);
 }
 
 .package-card label:hover {
@@ -183,7 +185,7 @@ body {
 }
 
 .package-hours {
-  color: #25313d;
+  color: #24180d;
   font-size: 1.25rem;
   font-weight: 900;
 }
@@ -211,7 +213,7 @@ body {
 }
 
 .summary-label {
-  color: #6c7a89;
+  color: #7c6f61;
   font-size: .78rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -219,7 +221,7 @@ body {
 
 .summary-value {
   margin: 5px 0 14px;
-  color: #25313d;
+  color: #24180d;
   font-size: 1.05rem;
   font-weight: 900;
 }
@@ -227,10 +229,10 @@ body {
 .payment-note {
   margin-top: 12px;
   padding: 12px 14px;
-  border-left: 5px solid #0f8fcf;
+  border-left: 5px solid #b8860b;
   border-radius: 8px;
-  background: #eef7fc;
-  color: #25313d;
+  background: #fff4d6;
+  color: #24180d;
   font-weight: 800;
 }
 
@@ -253,7 +255,7 @@ body {
 .qr-box img {
   width: min(280px, 100%);
   height: auto;
-  border: 1px solid #dce5ec;
+  border: 1px solid #e4d6bd;
   border-radius: 8px;
   padding: 10px;
   background: #fff;

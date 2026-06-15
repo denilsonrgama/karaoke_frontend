@@ -13,10 +13,28 @@
     <style>
         :root {
             --app-nav-offset: 78px;
+            --saloon-black: #070708;
+            --saloon-ink: #24180d;
+            --saloon-panel: #fff;
+            --saloon-paper: #f6f0e7;
+            --saloon-soft: #fffdf8;
+            --saloon-gold: #b8860b;
+            --saloon-gold-dark: #8f5f12;
+            --saloon-gold-deep: #6f4709;
+            --saloon-muted: #7c6f61;
+            --saloon-border: rgba(95,65,24,.18);
+        }
+
+        body {
+            background: var(--saloon-paper) !important;
+            color: var(--saloon-ink);
         }
 
         .app-navbar {
             min-height: 58px;
+            border-bottom: 1px solid rgba(246,195,67,.18);
+            background:
+                linear-gradient(145deg, #070708 0%, #15100b 52%, #24180d 100%) !important;
         }
 
         .app-navbar .navbar-brand {
@@ -31,7 +49,8 @@
             height: 38px;
             border-radius: 999px;
             object-fit: contain;
-            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(246,195,67,.44);
+            background: rgba(0,0,0,.28);
         }
 
         .app-nav-actions {
@@ -47,6 +66,50 @@
 
         .app-page-offset {
             padding-top: var(--app-nav-offset);
+        }
+
+        .btn-primary,
+        .btn-success {
+            border-color: var(--saloon-gold-dark);
+            background: var(--saloon-gold-dark);
+            color: #fff;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-success:hover,
+        .btn-success:focus {
+            border-color: var(--saloon-gold-deep);
+            background: var(--saloon-gold-deep);
+            color: #fff;
+        }
+
+        .btn-outline-primary,
+        .btn-outline-secondary,
+        .btn-outline-success {
+            border-color: var(--saloon-gold-dark);
+            color: var(--saloon-gold-deep);
+        }
+
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus,
+        .btn-outline-secondary:hover,
+        .btn-outline-secondary:focus,
+        .btn-outline-success:hover,
+        .btn-outline-success:focus {
+            border-color: var(--saloon-gold-dark);
+            background: var(--saloon-gold-dark);
+            color: #fff;
+        }
+
+        .page-link {
+            color: var(--saloon-gold-deep);
+        }
+
+        .page-link:hover,
+        .page-link:focus {
+            color: var(--saloon-gold-deep);
+            box-shadow: 0 0 0 .2rem rgba(184,134,11,.17);
         }
 
         @media (max-width: 576px) {
@@ -88,7 +151,7 @@
     </style>
 </head>
 
-<body class="bg-light text-dark">
+<body>
 
 {% if not hide_nav %}
 <nav class="navbar navbar-dark bg-black px-4 shadow-sm fixed-top app-navbar">
