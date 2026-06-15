@@ -20,7 +20,18 @@
         }
 
         .app-navbar .navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             white-space: nowrap;
+        }
+
+        .app-navbar-logo {
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #000;
         }
 
         .app-nav-actions {
@@ -81,7 +92,10 @@
 
 {% if not hide_nav %}
 <nav class="navbar navbar-dark bg-black px-4 shadow-sm fixed-top app-navbar">
-    <a class="navbar-brand fw-bold" href="{% url 'home' %}">Karaoke</a>
+    <a class="navbar-brand fw-bold" href="{% url 'home' %}">
+        <img src="{% static 'musicas/karaoke-logo.jpg' %}" alt="Karaoke do Cowboy" class="app-navbar-logo">
+        <span>Karaoke</span>
+    </a>
 
     <div class="d-flex gap-2 align-items-center app-nav-actions">
         <a href="{% url 'lista_musicas' %}" class="btn btn-outline-light btn-sm">Lista</a>
