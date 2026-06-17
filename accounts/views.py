@@ -1,12 +1,17 @@
 # accounts/views.py
 import os
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, render
+from django.shortcuts import resolve_url
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 
 from musicas.models import Musica
@@ -24,7 +29,22 @@ class CustomLoginView(LoginView):
         return response
 
     def get_success_url(self):
-        return "/"
+        redirect_to = self.get_redirect_url() or resolve_url(settings.LOGIN_REDIRECT_URL)
+        query = urlencode({"next": redirect_to})
+        return f"{reverse('accounts:welcome')}?{query}"
+
+
+@login_required
+def welcome_view(request):
+    next_url = request.GET.get("next") or resolve_url(settings.LOGIN_REDIRECT_URL)
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = resolve_url(settings.LOGIN_REDIRECT_URL)
+
+    return render(request, "accounts/welcome.html", {"next_url": next_url})
 
 
 def register_view(request):
