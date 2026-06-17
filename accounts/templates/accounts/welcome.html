@@ -119,14 +119,15 @@
       height: 100%;
       border-radius: inherit;
       background: linear-gradient(90deg, var(--saloon-red), var(--saloon-gold), #fff1a6);
-      animation: load 3s cubic-bezier(.18, .72, .18, 1) forwards;
+      animation: load 10s cubic-bezier(.18, .72, .18, 1) forwards;
       box-shadow: 0 0 24px rgba(243, 178, 62, 0.55);
     }
 
     @keyframes load {
       0% { width: 0; }
-      45% { width: 58%; }
-      72% { width: 78%; }
+      28% { width: 34%; }
+      55% { width: 62%; }
+      82% { width: 86%; }
       100% { width: 100%; }
     }
 
@@ -173,7 +174,7 @@
   <script>
     window.setTimeout(function () {
       window.location.href = "{{ next_url|escapejs }}";
-    }, 3200);
+    }, 10200);
   </script>
 </body>
 </html>
