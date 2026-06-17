@@ -44,7 +44,19 @@ def welcome_view(request):
     ):
         next_url = resolve_url(settings.LOGIN_REDIRECT_URL)
 
-    return render(request, "accounts/welcome.html", {"next_url": next_url})
+    name = (
+        getattr(request.user, "first_name", "")
+        or getattr(request.user, "full_name", "")
+        or getattr(request.user, "username", "")
+        or "Cowboy"
+    )
+    display_name = name.strip().split()[0] if name.strip() else "Cowboy"
+
+    return render(
+        request,
+        "accounts/welcome.html",
+        {"next_url": next_url, "display_name": display_name},
+    )
 
 
 def register_view(request):
