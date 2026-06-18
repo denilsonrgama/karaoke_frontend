@@ -190,28 +190,31 @@ class AuditEvent(models.Model):
         duration_seconds=0,
         metadata=None,
     ):
-        actor = user if user is not None else getattr(request, "user", None)
-        if actor is not None and not getattr(actor, "is_authenticated", False):
-            actor = None
-
         try:
-            duration = max(int(float(duration_seconds or 0)), 0)
-        except (TypeError, ValueError):
-            duration = 0
+            actor = user if user is not None else getattr(request, "user", None)
+            if actor is not None and not getattr(actor, "is_authenticated", False):
+                actor = None
 
-        return cls.objects.create(
-            user=actor,
-            event_type=event_type,
-            email=email or getattr(actor, "email", "") or "",
-            codigo=str(codigo or "").zfill(5) if codigo else "",
-            nome=nome or "",
-            artista=artista or "",
-            duration_seconds=duration,
-            path=request.get_full_path()[:500],
-            ip_address=cls.client_ip(request),
-            user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:300],
-            metadata=metadata or {},
-        )
+            try:
+                duration = max(int(float(duration_seconds or 0)), 0)
+            except (TypeError, ValueError):
+                duration = 0
+
+            return cls.objects.create(
+                user=actor,
+                event_type=event_type,
+                email=email or getattr(actor, "email", "") or "",
+                codigo=str(codigo or "").zfill(5) if codigo else "",
+                nome=nome or "",
+                artista=artista or "",
+                duration_seconds=duration,
+                path=request.get_full_path()[:500],
+                ip_address=cls.client_ip(request),
+                user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:300],
+                metadata=metadata or {},
+            )
+        except Exception:
+            return None
 
 
 class SiteConfiguration(models.Model):
