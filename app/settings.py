@@ -51,6 +51,8 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
+CSRF_FAILURE_VIEW = "accounts.views.csrf_failure"
+
 
 
 # Application definition

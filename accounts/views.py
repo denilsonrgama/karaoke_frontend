@@ -44,7 +44,16 @@ class CustomLoginView(LoginView):
             AuditEvent.LOGIN_SUCCESS,
             user=self.request.user,
         )
-        messages.success(self.request, "Login realizado com sucesso. Seja bem vindo!")
+        login_message = "Login realizado com sucesso. Seja bem vindo!"
+        storage = messages.get_messages(self.request)
+        existing_messages = [
+            message
+            for message in storage
+            if str(message) != login_message
+        ]
+        for message in existing_messages:
+            messages.add_message(self.request, message.level, str(message), extra_tags=message.extra_tags)
+        messages.success(self.request, login_message)
         return response
 
     def form_invalid(self, form):
@@ -60,6 +69,21 @@ class CustomLoginView(LoginView):
         redirect_to = self.get_redirect_url() or resolve_url(settings.LOGIN_REDIRECT_URL)
         query = urlencode({"next": redirect_to})
         return f"{reverse('accounts:welcome')}?{query}"
+
+
+def csrf_failure(request, reason=""):
+    messages.warning(
+        request,
+        "Sua sessao expirou. Abra o login novamente e tente entrar mais uma vez.",
+    )
+    next_url = request.POST.get("next") or request.GET.get("next") or settings.LOGIN_REDIRECT_URL
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = settings.LOGIN_REDIRECT_URL
+    return redirect(f"{reverse('login')}?{urlencode({'next': next_url})}")
 
 
 @login_required
