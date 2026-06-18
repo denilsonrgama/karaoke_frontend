@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Auditoria de acessos{% endblock %}
+
+{% block content %}
+<style>
+body {
+  background: #f6f0e7;
+  color: #2a2118;
+}
+
+.audit-shell {
+  max-width: 1180px;
+  margin: 0 auto 48px;
+}
+
+.audit-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.audit-title h1 {
+  margin: 0;
+  color: #5a2d0c;
+  font-weight: 900;
+}
+
+.audit-title p {
+  margin: 4px 0 0;
+  color: #6b5a4b;
+  font-weight: 700;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.metric-card,
+.audit-panel {
+  background: #fff;
+  border: 1px solid rgba(95,65,24,.18);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(66,43,14,.08);
+}
+
+.metric-card {
+  padding: 16px;
+}
+
+.metric-label {
+  color: #7c6f61;
+  font-weight: 800;
+  font-size: .9rem;
+}
+
+.metric-value {
+  color: #5a2d0c;
+  font-size: 1.7rem;
+  font-weight: 900;
+}
+
+.audit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.audit-panel {
+  padding: 18px;
+}
+
+.audit-panel h2 {
+  margin: 0 0 14px;
+  color: #5a2d0c;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.audit-table th,
+.audit-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid rgba(90,45,12,.12);
+  vertical-align: top;
+}
+
+.audit-table th {
+  color: #7c6f61;
+  font-size: .82rem;
+  text-transform: uppercase;
+}
+
+.audit-table td {
+  color: #2a2118;
+  font-weight: 700;
+}
+
+.muted {
+  color: #7c6f61;
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 840px) {
+  .audit-header,
+  .audit-grid {
+    display: block;
+  }
+
+  .audit-panel {
+    margin-bottom: 16px;
+    overflow-x: auto;
+  }
+}
+</style>
+
+<div class="audit-shell">
+  <div class="audit-header">
+    <div class="audit-title">
+      <h1>Auditoria de acessos</h1>
+      <p>Resumo dos {{ period_label }}.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-outline-secondary" href="{% url 'site_admin' %}">Voltar ao admin</a>
+      <a class="btn btn-outline-secondary" href="{% url 'admin:accounts_auditevent_changelist' %}">Abrir registros</a>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Logins com sucesso</div>
+      <div class="metric-value">{{ summary.login_success }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Falhas de login</div>
+      <div class="metric-value">{{ summary.login_failure }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Musicas iniciadas</div>
+      <div class="metric-value">{{ summary.song_plays }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Detalhes abertos</div>
+      <div class="metric-value">{{ summary.music_details }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Buscas/lista</div>
+      <div class="metric-value">{{ summary.list_views }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Tempo assistido</div>
+      <div class="metric-value">{{ summary.watch_label }}</div>
+    </div>
+  </div>
+
+  <div class="audit-grid">
+    <section class="audit-panel">
+      <h2>Musicas mais iniciadas</h2>
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Musica</th>
+            <th>Codigo</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in top_songs %}
+            <tr>
+              <td>
+                {{ item.nome|default:"Sem nome" }}
+                <div class="muted">{{ item.artista }}</div>
+              </td>
+              <td>{{ item.codigo }}</td>
+              <td>{{ item.total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">Nenhuma musica iniciada no periodo.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="audit-panel">
+      <h2>Tempo por musica</h2>
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Musica</th>
+            <th>Eventos</th>
+            <th>Tempo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in watch_by_song %}
+            <tr>
+              <td>
+                {{ item.nome|default:"Sem nome" }}
+                <div class="muted">{{ item.codigo }} - {{ item.artista }}</div>
+              </td>
+              <td>{{ item.views }}</td>
+              <td>{{ item.watch_label }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">Nenhum tempo registrado ainda.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="audit-panel">
+      <h2>Resumo por dia</h2>
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Dia</th>
+            <th>Total</th>
+            <th>Logins</th>
+            <th>Musicas</th>
+            <th>Falhas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in events_by_day %}
+            <tr>
+              <td>{{ item.day|date:"d/m/Y" }}</td>
+              <td>{{ item.total }}</td>
+              <td>{{ item.logins }}</td>
+              <td>{{ item.plays }}</td>
+              <td>{{ item.failures }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5">Nenhum evento registrado no periodo.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="audit-panel">
+      <h2>Eventos recentes</h2>
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Quando</th>
+            <th>Evento</th>
+            <th>Usuario</th>
+            <th>Detalhe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in recent_events %}
+            <tr>
+              <td>{{ event.created_at|date:"d/m H:i" }}</td>
+              <td>{{ event.get_event_type_display }}</td>
+              <td>{{ event.user.email|default:event.email|default:"-" }}</td>
+              <td>
+                {% if event.codigo %}{{ event.codigo }} - {{ event.nome }}{% else %}{{ event.path }}{% endif %}
+                {% if event.duration_seconds %}<div class="muted">{{ event.duration_label }} assistidos</div>{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4">Nenhum evento recente.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 # accounts/views.py
 import os
+from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -8,6 +9,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncDate
 from django.shortcuts import redirect, render
 from django.shortcuts import resolve_url
 from django.urls import reverse
@@ -17,7 +20,18 @@ from django.utils import timezone
 from musicas.models import Musica
 from payments.models import ContributionPayment
 from .forms import SiteConfigurationForm, UserRegisterForm
-from .models import SiteConfiguration, User
+from .models import AuditEvent, SiteConfiguration, User
+
+
+def duration_label(seconds):
+    seconds = int(seconds or 0)
+    if seconds < 60:
+        return f"{seconds}s"
+    minutes, rest = divmod(seconds, 60)
+    if minutes < 60:
+        return f"{minutes}min {rest}s" if rest else f"{minutes}min"
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h {minutes}min" if minutes else f"{hours}h"
 
 
 class CustomLoginView(LoginView):
@@ -25,8 +39,22 @@ class CustomLoginView(LoginView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        AuditEvent.log_from_request(
+            self.request,
+            AuditEvent.LOGIN_SUCCESS,
+            user=self.request.user,
+        )
         messages.success(self.request, "Login realizado com sucesso. Seja bem vindo!")
         return response
+
+    def form_invalid(self, form):
+        email = self.request.POST.get("username") or self.request.POST.get("email") or ""
+        AuditEvent.log_from_request(
+            self.request,
+            AuditEvent.LOGIN_FAILURE,
+            email=email,
+        )
+        return super().form_invalid(form)
 
     def get_success_url(self):
         redirect_to = self.get_redirect_url() or resolve_url(settings.LOGIN_REDIRECT_URL)
@@ -146,7 +174,64 @@ def admin_dashboard(request):
     return render(request, "accounts/admin_dashboard.html", context)
 
 
+@staff_member_required
+def audit_dashboard(request):
+    now = timezone.now()
+    start = now - timedelta(days=30)
+    events = AuditEvent.objects.filter(created_at__gte=start)
+    watch_events = events.filter(event_type=AuditEvent.VIDEO_WATCH)
+
+    total_watch_seconds = watch_events.aggregate(total=Sum("duration_seconds"))["total"] or 0
+    summary = {
+        "login_success": events.filter(event_type=AuditEvent.LOGIN_SUCCESS).count(),
+        "login_failure": events.filter(event_type=AuditEvent.LOGIN_FAILURE).count(),
+        "song_plays": events.filter(event_type=AuditEvent.MUSIC_PLAY).count(),
+        "music_details": events.filter(event_type=AuditEvent.MUSIC_DETAIL).count(),
+        "list_views": events.filter(event_type=AuditEvent.LIST_VIEW).count(),
+        "watch_label": duration_label(total_watch_seconds),
+        "watch_seconds": total_watch_seconds,
+    }
+
+    top_songs = (
+        events.filter(event_type=AuditEvent.MUSIC_PLAY)
+        .values("codigo", "nome", "artista")
+        .annotate(total=Count("id"))
+        .order_by("-total", "nome")[:10]
+    )
+    watch_by_song = list(
+        watch_events.values("codigo", "nome", "artista")
+        .annotate(total_seconds=Sum("duration_seconds"), views=Count("id"))
+        .order_by("-total_seconds", "nome")[:10]
+    )
+    for item in watch_by_song:
+        item["watch_label"] = duration_label(item["total_seconds"])
+    events_by_day = (
+        events.annotate(day=TruncDate("created_at"))
+        .values("day")
+        .annotate(
+            total=Count("id"),
+            logins=Count("id", filter=Q(event_type=AuditEvent.LOGIN_SUCCESS)),
+            plays=Count("id", filter=Q(event_type=AuditEvent.MUSIC_PLAY)),
+            failures=Count("id", filter=Q(event_type=AuditEvent.LOGIN_FAILURE)),
+        )
+        .order_by("-day")[:14]
+    )
+    recent_events = events.select_related("user").order_by("-created_at")[:40]
+
+    context = {
+        "summary": summary,
+        "top_songs": top_songs,
+        "watch_by_song": watch_by_song,
+        "events_by_day": events_by_day,
+        "recent_events": recent_events,
+        "period_label": "ultimos 30 dias",
+    }
+    return render(request, "accounts/audit_dashboard.html", context)
+
+
 def logout_view(request):
+    if request.user.is_authenticated:
+        AuditEvent.log_from_request(request, AuditEvent.LOGOUT, user=request.user)
     logout(request)
     messages.success(request, "Obrigado! Volte sempre.")
     return redirect("home")

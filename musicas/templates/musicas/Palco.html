@@ -148,6 +148,7 @@
         id="video"
         data-codigo="{{ musica.codigo }}"
         data-play-url="{% url 'registrar_play' musica.codigo %}"
+        data-watch-url="{% url 'registrar_visualizacao' musica.codigo %}"
         data-original-src="{% url 'stream_video' musica.codigo %}?token={{ token }}"
         data-tone-src="{% url 'stream_video_tom' musica.codigo 'TONE' %}?token={{ token }}"
         data-tone-prepare-src="{% url 'prepare_video_tom' musica.codigo 'TONE' %}?token={{ token }}"
@@ -179,6 +180,9 @@
     let currentTone = 0;
     let isPreparingTone = false;
     let cancelToneRequest = false;
+    let watchSeconds = 0;
+    let lastWatchTime = 0;
+    let lastWatchSentAt = 0;
     const preparedToneUrls = {};
 
     function toneUrl(tone) {
@@ -382,7 +386,59 @@
         } catch (e) {}
     });
 
+    function collectWatchSeconds() {
+        if (!video || video.paused || video.ended) {
+            lastWatchTime = 0;
+            return;
+        }
+
+        const current = Number(video.currentTime || 0);
+        if (lastWatchTime > 0 && current >= lastWatchTime) {
+            watchSeconds += Math.min(current - lastWatchTime, 5);
+        }
+        lastWatchTime = current;
+    }
+
+    function sendWatchTime(force = false) {
+        collectWatchSeconds();
+        const rounded = Math.floor(watchSeconds);
+        if (rounded < 5 && !force) {
+            return;
+        }
+        if (rounded <= 0) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("duration_seconds", String(rounded));
+        formData.append("tone", String(currentTone));
+
+        watchSeconds = 0;
+        lastWatchSentAt = Date.now();
+
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(video.dataset.watchUrl, formData);
+            return;
+        }
+
+        fetch(video.dataset.watchUrl, {
+            method: "POST",
+            credentials: "same-origin",
+            body: formData,
+            keepalive: true,
+        }).catch(() => {});
+    }
+
+    video.addEventListener("timeupdate", () => {
+        collectWatchSeconds();
+        if (Date.now() - lastWatchSentAt > 30000) {
+            sendWatchTime(false);
+        }
+    });
+    video.addEventListener("pause", () => sendWatchTime(false));
+
     video.addEventListener("ended", async () => {
+        sendWatchTime(true);
         if (document.fullscreenElement) {
             try { await document.exitFullscreen(); } catch (e) {}
         }
@@ -393,6 +449,8 @@
             window.location.href = "{% url 'lista_musicas' %}";
         }
     });
+
+    window.addEventListener("pagehide", () => sendWatchTime(true));
 
     document.addEventListener("click", function () {
         if (video && video.paused) {

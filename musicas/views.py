@@ -17,7 +17,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from accounts.models import MusicaEstatistica, SiteConfiguration, UserPlay
+from accounts.models import AuditEvent, MusicaEstatistica, SiteConfiguration, UserPlay
 from musicas.models import Musica
 from .models import Musica
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -389,6 +389,17 @@ def home(request):
 # -----------------------------
 @login_required
 def lista_musicas(request):
+    AuditEvent.log_from_request(
+        request,
+        AuditEvent.LIST_VIEW,
+        metadata={
+            "codigo": request.GET.get("codigo") or "",
+            "artista": request.GET.get("artista") or "",
+            "nome": request.GET.get("nome") or "",
+            "page": request.GET.get("page") or "1",
+        },
+    )
+
     codigo = request.GET.get("codigo")
     artista = request.GET.get("artista")
     nome = request.GET.get("nome")
@@ -452,6 +463,13 @@ def detalhe_musica(request, codigo):
         )
 
     token = signing.dumps(codigo, salt="video-stream")
+    AuditEvent.log_from_request(
+        request,
+        AuditEvent.MUSIC_DETAIL,
+        codigo=codigo,
+        nome=musica.get("nome") or "",
+        artista=musica.get("artista") or "",
+    )
 
     next_url = safe_next_url(request, reverse("lista_musicas"))
 
@@ -486,6 +504,15 @@ def modo_palco(request, codigo):
         raise Http404("Música não encontrada")
 
     # (opcional) estatística: só faz depois que musica existe
+    AuditEvent.log_from_request(
+        request,
+        AuditEvent.MUSIC_DETAIL,
+        codigo=codigo,
+        nome=musica.get("nome") or "",
+        artista=musica.get("artista") or "",
+        metadata={"mode": "palco"},
+    )
+
     estat, created = MusicaEstatistica.objects.get_or_create(
         codigo=musica["codigo"],
         defaults={
@@ -710,6 +737,14 @@ def registrar_play(request, codigo):
     nome = musica_dict.get("nome") or ""
     artista = musica_dict.get("artista") or ""
     user_play_result = mark_user_play(request, codigo_norm, musica_dict)
+    AuditEvent.log_from_request(
+        request,
+        AuditEvent.MUSIC_PLAY,
+        codigo=codigo_norm,
+        nome=nome,
+        artista=artista,
+        metadata={"counted": True},
+    )
 
     # tenta achar registro existente (aceita codigo "1001" e "01001")
     obj = Musica.objects.filter(codigo__in=[raw, codigo_norm]).first()
@@ -743,3 +778,35 @@ def registrar_play(request, codigo):
         payload.update(user_usage_context(request.user))
 
     return JsonResponse(payload)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def registrar_visualizacao(request, codigo):
+    codigo_norm = str(codigo).zfill(5)
+    access_response = ensure_music_access(request, codigo_norm, json_response=True)
+    if access_response:
+        return access_response
+
+    duration = request.POST.get("duration_seconds") or request.POST.get("duration") or 0
+    current_tone = request.POST.get("tone") or "0"
+    try:
+        musica_dict = buscar_musica_por_codigo(codigo_norm) or {}
+    except Exception:
+        local_musica = Musica.objects.filter(codigo=codigo_norm).first()
+        musica_dict = {
+            "nome": getattr(local_musica, "nome", "") or "",
+            "artista": getattr(local_musica, "artista", "") or "",
+        }
+
+    event = AuditEvent.log_from_request(
+        request,
+        AuditEvent.VIDEO_WATCH,
+        codigo=codigo_norm,
+        nome=musica_dict.get("nome") or "",
+        artista=musica_dict.get("artista") or "",
+        duration_seconds=duration,
+        metadata={"tone": current_tone},
+    )
+    return JsonResponse({"ok": True, "duration_seconds": event.duration_seconds})
