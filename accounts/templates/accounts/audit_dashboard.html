@@ -65,21 +65,43 @@ body {
   font-weight: 900;
 }
 
-.audit-grid {
+.audit-accordion {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: 12px;
 }
 
 .audit-panel {
-  padding: 18px;
+  overflow: hidden;
 }
 
-.audit-panel h2 {
-  margin: 0 0 14px;
+.audit-panel-header {
+  width: 100%;
+  padding: 16px 18px;
+  border: 0;
+  background: #fff;
   color: #5a2d0c;
+  text-align: left;
   font-size: 1.15rem;
   font-weight: 900;
+}
+
+.audit-panel-header:not(.collapsed) {
+  background: #fff7e8;
+  color: #5a2d0c;
+}
+
+.audit-panel-header::after {
+  float: right;
+  content: "+";
+  color: #8f5f12;
+}
+
+.audit-panel-header:not(.collapsed)::after {
+  content: "-";
+}
+
+.audit-panel-body {
+  padding: 0 18px 18px;
 }
 
 .audit-table {
@@ -156,14 +178,12 @@ body {
 }
 
 @media (max-width: 840px) {
-  .audit-header,
-  .audit-grid {
+  .audit-header {
     display: block;
   }
 
   .audit-panel {
     margin-bottom: 16px;
-    overflow-x: auto;
   }
 
   .recent-event {
@@ -216,148 +236,177 @@ body {
     </div>
   </div>
 
-  <div class="audit-grid">
+  <div class="audit-accordion" id="auditAccordion">
     <section class="audit-panel">
-      <h2>Musicas mais iniciadas</h2>
-      <table class="audit-table">
-        <thead>
-          <tr>
-            <th>Musica</th>
-            <th>Codigo</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in top_songs %}
-            <tr>
-              <td>
-                {{ item.nome|default:"Sem nome" }}
-                <div class="muted">{{ item.artista }}</div>
-              </td>
-              <td>{{ item.codigo }}</td>
-              <td>{{ item.total }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="3">Nenhuma musica iniciada no periodo.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
-
-    <section class="audit-panel">
-      <h2>Tempo por musica</h2>
-      <table class="audit-table">
-        <thead>
-          <tr>
-            <th>Musica</th>
-            <th>Eventos</th>
-            <th>Tempo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in watch_by_song %}
-            <tr>
-              <td>
-                {{ item.nome|default:"Sem nome" }}
-                <div class="muted">{{ item.codigo }} - {{ item.artista }}</div>
-              </td>
-              <td>{{ item.views }}</td>
-              <td>{{ item.watch_label }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="3">Nenhum tempo registrado ainda.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
-
-    <section class="audit-panel">
-      <h2>Resumo por dia</h2>
-      <table class="audit-table">
-        <thead>
-          <tr>
-            <th>Dia</th>
-            <th>Total</th>
-            <th>Logins</th>
-            <th>Musicas</th>
-            <th>Falhas</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in events_by_day %}
-            <tr>
-              <td>{{ item.day|date:"d/m/Y" }}</td>
-              <td>{{ item.total }}</td>
-              <td>{{ item.logins }}</td>
-              <td>{{ item.plays }}</td>
-              <td>{{ item.failures }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="5">Nenhum evento registrado no periodo.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
-
-    <section class="audit-panel">
-      <h2>Acessos recentes</h2>
-      <div class="recent-events-list">
-        {% for event in recent_events %}
-          <div class="recent-event">
-            <div class="recent-event-value">
-              <span class="recent-event-label">Quando</span>
-              {{ event.created_at|date:"d/m H:i" }}
-            </div>
-            <div class="recent-event-value">
-              <span class="recent-event-label">Evento</span>
-              {{ event.get_event_type_display }}
-            </div>
-            <div class="recent-event-value">
-              <span class="recent-event-label">Usuario</span>
-              {{ event.user.email|default:event.email|default:"-" }}
-            </div>
-            <div class="recent-event-value">
-              <span class="recent-event-label">Detalhe</span>
-              <span class="event-detail">
-                {% if event.codigo %}{{ event.codigo }} - {{ event.nome }}{% else %}{{ event.path }}{% endif %}
-              </span>
-              {% if event.duration_seconds %}<div class="muted">{{ event.duration_label }} assistidos</div>{% endif %}
-            </div>
-          </div>
-        {% empty %}
-          <div class="recent-event-value">Nenhum evento recente.</div>
-        {% endfor %}
+      <button class="audit-panel-header" type="button" data-bs-toggle="collapse" data-bs-target="#auditTopSongs" aria-expanded="true" aria-controls="auditTopSongs">
+        Musicas mais iniciadas
+      </button>
+      <div id="auditTopSongs" class="collapse show" data-bs-parent="#auditAccordion">
+        <div class="audit-panel-body">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Musica</th>
+                <th>Codigo</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in top_songs %}
+                <tr>
+                  <td>
+                    {{ item.nome|default:"Sem nome" }}
+                    <div class="muted">{{ item.artista }}</div>
+                  </td>
+                  <td>{{ item.codigo }}</td>
+                  <td>{{ item.total }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3">Nenhuma musica iniciada no periodo.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
     <section class="audit-panel">
-      <h2>Visualizacoes recentes</h2>
-      <div class="recent-events-list">
-        {% for event in recent_watch_events %}
-          <div class="recent-event">
-            <div class="recent-event-value">
-              <span class="recent-event-label">Quando</span>
-              {{ event.created_at|date:"d/m H:i" }}
-            </div>
-            <div class="recent-event-value">
-              <span class="recent-event-label">Tempo</span>
-              {{ event.duration_label }}
-            </div>
-            <div class="recent-event-value">
-              <span class="recent-event-label">Usuario</span>
-              {{ event.user.email|default:event.email|default:"-" }}
-            </div>
-            <div class="recent-event-value">
-              <span class="recent-event-label">Musica</span>
-              <span class="event-detail">
-                {% if event.codigo %}{{ event.codigo }} - {{ event.nome }}{% else %}{{ event.path }}{% endif %}
-              </span>
-              {% if event.artista %}<div class="muted">{{ event.artista }}</div>{% endif %}
-            </div>
+      <button class="audit-panel-header collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#auditWatchBySong" aria-expanded="false" aria-controls="auditWatchBySong">
+        Tempo por musica
+      </button>
+      <div id="auditWatchBySong" class="collapse" data-bs-parent="#auditAccordion">
+        <div class="audit-panel-body">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Musica</th>
+                <th>Eventos</th>
+                <th>Tempo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in watch_by_song %}
+                <tr>
+                  <td>
+                    {{ item.nome|default:"Sem nome" }}
+                    <div class="muted">{{ item.codigo }} - {{ item.artista }}</div>
+                  </td>
+                  <td>{{ item.views }}</td>
+                  <td>{{ item.watch_label }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3">Nenhum tempo registrado ainda.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="audit-panel">
+      <button class="audit-panel-header collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#auditByDay" aria-expanded="false" aria-controls="auditByDay">
+        Resumo por dia
+      </button>
+      <div id="auditByDay" class="collapse" data-bs-parent="#auditAccordion">
+        <div class="audit-panel-body">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Dia</th>
+                <th>Total</th>
+                <th>Logins</th>
+                <th>Musicas</th>
+                <th>Falhas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in events_by_day %}
+                <tr>
+                  <td>{{ item.day|date:"d/m/Y" }}</td>
+                  <td>{{ item.total }}</td>
+                  <td>{{ item.logins }}</td>
+                  <td>{{ item.plays }}</td>
+                  <td>{{ item.failures }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5">Nenhum evento registrado no periodo.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="audit-panel">
+      <button class="audit-panel-header collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#auditRecentAccess" aria-expanded="false" aria-controls="auditRecentAccess">
+        Acessos recentes
+      </button>
+      <div id="auditRecentAccess" class="collapse" data-bs-parent="#auditAccordion">
+        <div class="audit-panel-body">
+          <div class="recent-events-list">
+            {% for event in recent_events %}
+              <div class="recent-event">
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Quando</span>
+                  {{ event.created_at|date:"d/m H:i" }}
+                </div>
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Evento</span>
+                  {{ event.get_event_type_display }}
+                </div>
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Usuario</span>
+                  {{ event.user.email|default:event.email|default:"-" }}
+                </div>
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Detalhe</span>
+                  <span class="event-detail">
+                    {% if event.codigo %}{{ event.codigo }} - {{ event.nome }}{% else %}{{ event.path }}{% endif %}
+                  </span>
+                </div>
+              </div>
+            {% empty %}
+              <div class="recent-event-value">Nenhum evento recente.</div>
+            {% endfor %}
           </div>
-        {% empty %}
-          <div class="recent-event-value">Nenhuma visualizacao recente.</div>
-        {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="audit-panel">
+      <button class="audit-panel-header collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#auditRecentWatch" aria-expanded="false" aria-controls="auditRecentWatch">
+        Visualizacoes recentes
+      </button>
+      <div id="auditRecentWatch" class="collapse" data-bs-parent="#auditAccordion">
+        <div class="audit-panel-body">
+          <div class="recent-events-list">
+            {% for event in recent_watch_events %}
+              <div class="recent-event">
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Quando</span>
+                  {{ event.created_at|date:"d/m H:i" }}
+                </div>
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Tempo</span>
+                  {{ event.duration_label }}
+                </div>
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Usuario</span>
+                  {{ event.user.email|default:event.email|default:"-" }}
+                </div>
+                <div class="recent-event-value">
+                  <span class="recent-event-label">Musica</span>
+                  <span class="event-detail">
+                    {% if event.codigo %}{{ event.codigo }} - {{ event.nome }}{% else %}{{ event.path }}{% endif %}
+                  </span>
+                  {% if event.artista %}<div class="muted">{{ event.artista }}</div>{% endif %}
+                </div>
+              </div>
+            {% empty %}
+              <div class="recent-event-value">Nenhuma visualizacao recente.</div>
+            {% endfor %}
+          </div>
+        </div>
       </div>
     </section>
   </div>
