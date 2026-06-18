@@ -180,6 +180,7 @@ def audit_dashboard(request):
     start = now - timedelta(days=30)
     events = AuditEvent.objects.filter(created_at__gte=start)
     watch_events = events.filter(event_type=AuditEvent.VIDEO_WATCH)
+    access_events = events.exclude(event_type=AuditEvent.VIDEO_WATCH)
 
     total_watch_seconds = watch_events.aggregate(total=Sum("duration_seconds"))["total"] or 0
     summary = {
@@ -206,7 +207,7 @@ def audit_dashboard(request):
     for item in watch_by_song:
         item["watch_label"] = duration_label(item["total_seconds"])
     events_by_day = (
-        events.annotate(day=TruncDate("created_at"))
+        access_events.annotate(day=TruncDate("created_at"))
         .values("day")
         .annotate(
             total=Count("id"),
@@ -216,7 +217,8 @@ def audit_dashboard(request):
         )
         .order_by("-day")[:14]
     )
-    recent_events = events.select_related("user").order_by("-created_at")[:40]
+    recent_events = access_events.select_related("user").order_by("-created_at")[:40]
+    recent_watch_events = watch_events.select_related("user").order_by("-created_at")[:40]
 
     context = {
         "summary": summary,
@@ -224,6 +226,7 @@ def audit_dashboard(request):
         "watch_by_song": watch_by_song,
         "events_by_day": events_by_day,
         "recent_events": recent_events,
+        "recent_watch_events": recent_watch_events,
         "period_label": "ultimos 30 dias",
     }
     return render(request, "accounts/audit_dashboard.html", context)

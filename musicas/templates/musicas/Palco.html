@@ -182,7 +182,7 @@
     let cancelToneRequest = false;
     let watchSeconds = 0;
     let lastWatchTime = 0;
-    let lastWatchSentAt = 0;
+    let watchTimeSent = false;
     const preparedToneUrls = {};
 
     function toneUrl(tone) {
@@ -399,12 +399,13 @@
         lastWatchTime = current;
     }
 
-    function sendWatchTime(force = false) {
-        collectWatchSeconds();
-        const rounded = Math.floor(watchSeconds);
-        if (rounded < 5 && !force) {
+    function sendWatchTime() {
+        if (watchTimeSent) {
             return;
         }
+
+        collectWatchSeconds();
+        const rounded = Math.floor(watchSeconds);
         if (rounded <= 0) {
             return;
         }
@@ -413,8 +414,7 @@
         formData.append("duration_seconds", String(rounded));
         formData.append("tone", String(currentTone));
 
-        watchSeconds = 0;
-        lastWatchSentAt = Date.now();
+        watchTimeSent = true;
 
         if (navigator.sendBeacon) {
             navigator.sendBeacon(video.dataset.watchUrl, formData);
@@ -429,16 +429,11 @@
         }).catch(() => {});
     }
 
-    video.addEventListener("timeupdate", () => {
-        collectWatchSeconds();
-        if (Date.now() - lastWatchSentAt > 30000) {
-            sendWatchTime(false);
-        }
-    });
-    video.addEventListener("pause", () => sendWatchTime(false));
+    video.addEventListener("timeupdate", collectWatchSeconds);
+    video.addEventListener("pause", collectWatchSeconds);
 
     video.addEventListener("ended", async () => {
-        sendWatchTime(true);
+        sendWatchTime();
         if (document.fullscreenElement) {
             try { await document.exitFullscreen(); } catch (e) {}
         }
@@ -450,7 +445,7 @@
         }
     });
 
-    window.addEventListener("pagehide", () => sendWatchTime(true));
+    window.addEventListener("pagehide", sendWatchTime);
 
     document.addEventListener("click", function () {
         if (video && video.paused) {

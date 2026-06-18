@@ -562,7 +562,7 @@ let isPreparingTone = false;
 let cancelToneRequest = false;
 let watchSeconds = 0;
 let lastWatchTime = 0;
-let lastWatchSentAt = 0;
+let watchTimeSent = false;
 const preparedToneUrls = {};
 const toneStorageKey = `karaokeTone:${video.dataset.codigo}`;
 
@@ -774,12 +774,13 @@ function collectWatchSeconds() {
   lastWatchTime = current;
 }
 
-function sendWatchTime(force = false) {
-  collectWatchSeconds();
-  const rounded = Math.floor(watchSeconds);
-  if (rounded < 5 && !force) {
+function sendWatchTime() {
+  if (watchTimeSent) {
     return;
   }
+
+  collectWatchSeconds();
+  const rounded = Math.floor(watchSeconds);
   if (rounded <= 0) {
     return;
   }
@@ -788,8 +789,7 @@ function sendWatchTime(force = false) {
   formData.append("duration_seconds", String(rounded));
   formData.append("tone", String(currentTone));
 
-  watchSeconds = 0;
-  lastWatchSentAt = Date.now();
+  watchTimeSent = true;
 
   if (navigator.sendBeacon) {
     navigator.sendBeacon(video.dataset.watchUrl, formData);
@@ -804,20 +804,15 @@ function sendWatchTime(force = false) {
   }).catch(() => {});
 }
 
-video.addEventListener("timeupdate", () => {
-  collectWatchSeconds();
-  if (Date.now() - lastWatchSentAt > 30000) {
-    sendWatchTime(false);
-  }
-});
-video.addEventListener("pause", () => sendWatchTime(false));
+video.addEventListener("timeupdate", collectWatchSeconds);
+video.addEventListener("pause", collectWatchSeconds);
 
 video.addEventListener("ended", () => {
-  sendWatchTime(true);
+  sendWatchTime();
   window.location.href = voltarUrl;
 });
 
-window.addEventListener("pagehide", () => sendWatchTime(true));
+window.addEventListener("pagehide", sendWatchTime);
 
 palcoBtn.addEventListener("click", async () => {
     if (isMobile) {

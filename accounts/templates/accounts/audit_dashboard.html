@@ -300,7 +300,7 @@ body {
     </section>
 
     <section class="audit-panel">
-      <h2>Eventos recentes</h2>
+      <h2>Acessos recentes</h2>
       <div class="recent-events-list">
         {% for event in recent_events %}
           <div class="recent-event">
@@ -326,6 +326,37 @@ body {
           </div>
         {% empty %}
           <div class="recent-event-value">Nenhum evento recente.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="audit-panel">
+      <h2>Visualizacoes recentes</h2>
+      <div class="recent-events-list">
+        {% for event in recent_watch_events %}
+          <div class="recent-event">
+            <div class="recent-event-value">
+              <span class="recent-event-label">Quando</span>
+              {{ event.created_at|date:"d/m H:i" }}
+            </div>
+            <div class="recent-event-value">
+              <span class="recent-event-label">Tempo</span>
+              {{ event.duration_label }}
+            </div>
+            <div class="recent-event-value">
+              <span class="recent-event-label">Usuario</span>
+              {{ event.user.email|default:event.email|default:"-" }}
+            </div>
+            <div class="recent-event-value">
+              <span class="recent-event-label">Musica</span>
+              <span class="event-detail">
+                {% if event.codigo %}{{ event.codigo }} - {{ event.nome }}{% else %}{{ event.path }}{% endif %}
+              </span>
+              {% if event.artista %}<div class="muted">{{ event.artista }}</div>{% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="recent-event-value">Nenhuma visualizacao recente.</div>
         {% endfor %}
       </div>
     </section>
