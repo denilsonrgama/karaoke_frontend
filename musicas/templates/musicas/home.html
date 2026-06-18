@@ -400,6 +400,7 @@ body {
         <img src="{% static 'musicas/brand/brand-mark-candidate.png' %}" alt="Karaoke do Cowboy">
       </span>
       <span>{{ site_config.site_name }}</span>
+      <span class="app-version">{{ APP_VERSION }}</span>
     </a>
     <div class="home-nav-actions">
       {% if user.is_authenticated %}

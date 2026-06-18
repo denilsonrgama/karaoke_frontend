@@ -4,9 +4,13 @@ from pathlib import Path
 import dj_database_url
 from decouple import config
 
+from app.version import APP_VERSION as DEFAULT_APP_VERSION
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+APP_VERSION = config("APP_VERSION", default=DEFAULT_APP_VERSION)
 
 
 # Quick-start development settings - unsuitable for production
@@ -86,6 +90,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'app.context_processors.app_version',
             ],
         },
     },

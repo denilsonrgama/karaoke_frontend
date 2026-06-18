@@ -15,6 +15,16 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+## Versionamento
+
+A versao exibida na interface fica em:
+
+```text
+app/version.py
+```
+
+Para publicar uma nova versao, altere `APP_VERSION` para o proximo numero, por exemplo `v002`, faca commit e atualize a VPS com `git pull`.
+
 ## Variaveis de email no Render
 
 Para a rotina "Esqueci minha senha" enviar email de verdade em producao, configure:

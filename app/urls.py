@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
+from app.views import status
 from musicas import views
 from accounts.views import CustomLoginView, admin_dashboard
 
@@ -16,6 +17,8 @@ urlpatterns = [
 
     # HOME
     path("", views.home, name="home"),
+    path("status/", status, name="app_status"),
+    path("api/status/", status, name="app_status_api"),
 
     # APPS
     path("musicas/", include("musicas.urls")),

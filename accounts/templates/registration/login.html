@@ -60,6 +60,23 @@
     color: #f6c343;
   }
 
+  .app-version {
+    display: inline-flex;
+    align-items: center;
+    min-height: 18px;
+    margin-left: 6px;
+    padding: 2px 6px;
+    border: 1px solid rgba(246,195,67,.42);
+    border-radius: 999px;
+    background: rgba(246,195,67,.12);
+    color: #f6c343;
+    font-size: .75rem;
+    font-weight: 900;
+    line-height: 1;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
   .brand-copy p {
     max-width: 420px;
     margin: 0;
@@ -218,7 +235,7 @@
         <img src="{% static 'musicas/brand/brand-mark-candidate.png' %}" alt="Karaoke do Cowboy">
       </div>
       <div class="brand-copy">
-        <h1>Karaoke do Cowboy</h1>
+        <h1>Karaoke do Cowboy <span class="app-version">{{ APP_VERSION }}</span></h1>
         <p>Acesse sua conta para buscar musicas, acompanhar seu tempo liberado e continuar cantando.</p>
       </div>
     </div>
