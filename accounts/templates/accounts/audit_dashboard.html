@@ -85,6 +85,7 @@ body {
 .audit-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .audit-table th,
@@ -103,6 +104,39 @@ body {
 .audit-table td {
   color: #2a2118;
   font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.audit-table th,
+.audit-table td {
+  max-width: 0;
+}
+
+.recent-events-table th:nth-child(1),
+.recent-events-table td:nth-child(1) {
+  width: 74px;
+}
+
+.recent-events-table th:nth-child(2),
+.recent-events-table td:nth-child(2) {
+  width: 74px;
+}
+
+.recent-events-table th:nth-child(3),
+.recent-events-table td:nth-child(3) {
+  width: 170px;
+}
+
+.recent-events-table th:nth-child(4),
+.recent-events-table td:nth-child(4) {
+  width: auto;
+}
+
+.event-detail {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .muted {
@@ -252,7 +286,7 @@ body {
 
     <section class="audit-panel">
       <h2>Eventos recentes</h2>
-      <table class="audit-table">
+      <table class="audit-table recent-events-table">
         <thead>
           <tr>
             <th>Quando</th>
@@ -268,7 +302,9 @@ body {
               <td>{{ event.get_event_type_display }}</td>
               <td>{{ event.user.email|default:event.email|default:"-" }}</td>
               <td>
+                <span class="event-detail">
                 {% if event.codigo %}{{ event.codigo }} - {{ event.nome }}{% else %}{{ event.path }}{% endif %}
+                </span>
                 {% if event.duration_seconds %}<div class="muted">{{ event.duration_label }} assistidos</div>{% endif %}
               </td>
             </tr>
