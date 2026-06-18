@@ -37,6 +37,10 @@ def duration_label(seconds):
 class CustomLoginView(LoginView):
     template_name = "registration/login.html"
 
+    @staticmethod
+    def clear_queued_messages(request):
+        list(messages.get_messages(request))
+
     def form_valid(self, form):
         response = super().form_valid(form)
         AuditEvent.log_from_request(
@@ -44,16 +48,8 @@ class CustomLoginView(LoginView):
             AuditEvent.LOGIN_SUCCESS,
             user=self.request.user,
         )
-        login_message = "Login realizado com sucesso. Seja bem vindo!"
-        storage = messages.get_messages(self.request)
-        existing_messages = [
-            message
-            for message in storage
-            if str(message) != login_message
-        ]
-        for message in existing_messages:
-            messages.add_message(self.request, message.level, str(message), extra_tags=message.extra_tags)
-        messages.success(self.request, login_message)
+        self.clear_queued_messages(self.request)
+        messages.success(self.request, "Login realizado com sucesso. Seja bem vindo!")
         return response
 
     def form_invalid(self, form):
@@ -72,6 +68,7 @@ class CustomLoginView(LoginView):
 
 
 def csrf_failure(request, reason=""):
+    CustomLoginView.clear_queued_messages(request)
     messages.warning(
         request,
         "Sua sessao expirou. Abra o login novamente e tente entrar mais uma vez.",
