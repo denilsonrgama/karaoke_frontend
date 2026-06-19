@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamentos Pix{% endblock %}
+
+{% block content %}
+<style>
+body {
+  background: #f6f0e7;
+  color: #2a2118;
+}
+
+.admin-shell {
+  max-width: 1120px;
+  margin: 0 auto 48px;
+}
+
+.admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.admin-title h1 {
+  margin: 0;
+  color: #5a2d0c;
+  font-weight: 900;
+}
+
+.admin-title p {
+  margin: 4px 0 0;
+  color: #6b5a4b;
+  font-weight: 700;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.metric-card,
+.admin-panel {
+  background: #fff;
+  border: 1px solid rgba(95,65,24,.18);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(66,43,14,.08);
+}
+
+.metric-card,
+.admin-panel {
+  padding: 18px;
+}
+
+.metric-label {
+  color: #7c6f61;
+  font-weight: 800;
+}
+
+.metric-value {
+  color: #5a2d0c;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(90,45,12,.12);
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: #7c6f61;
+  font-size: .82rem;
+  text-transform: uppercase;
+}
+
+.admin-table td {
+  color: #2a2118;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 220px auto;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff4d6;
+  color: #7a4d07;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.status-pill.approved {
+  background: #dff4e8;
+  color: #116b38;
+}
+
+.status-pill.pending {
+  background: #fff4d6;
+  color: #7a4d07;
+}
+
+.muted {
+  color: #7c6f61;
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+@media (max-width: 820px) {
+  .admin-header,
+  .filter-row {
+    display: block;
+  }
+
+  .filter-row .btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+</style>
+
+<div class="admin-shell">
+  <div class="admin-header">
+    <div class="admin-title">
+      <h1>Pagamentos Pix</h1>
+      <p>{{ total }} pagamento(s) encontrado(s).</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-outline-secondary" href="{% url 'site_admin' %}">Voltar ao admin</a>
+      <a class="btn btn-outline-secondary" href="{% url 'admin:payments_contributionpayment_changelist' %}">Abrir no Django admin</a>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Aprovados</div>
+      <div class="metric-value">{{ approved_count }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Pendentes</div>
+      <div class="metric-value">{{ pending_count }}</div>
+    </div>
+  </div>
+
+  <section class="admin-panel">
+    <form method="get" class="filter-row">
+      <select class="form-select" name="status">
+        <option value="">Todos os status</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-primary" type="submit">Filtrar</button>
+    </form>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Quando</th>
+          <th>Usuario</th>
+          <th>Valor</th>
+          <th>Horas</th>
+          <th>Status</th>
+          <th>Acesso ate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payment in payments %}
+          <tr>
+            <td>{{ payment.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ payment.user.email }}</td>
+            <td>R$ {{ payment.amount }}</td>
+            <td>{{ payment.access_hours }}</td>
+            <td><span class="status-pill {{ payment.status }}">{{ payment.get_status_display }}</span></td>
+            <td>
+              {% if payment.access_until %}
+                {{ payment.access_until|date:"d/m/Y H:i" }}
+              {% else %}
+                <span class="muted">Nao liberado</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">Nenhum pagamento encontrado.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="muted mt-3">Exibindo ate 100 registros mais recentes.</p>
+  </section>
+</div>
+{% endblock %}

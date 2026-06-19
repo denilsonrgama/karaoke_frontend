@@ -269,6 +269,48 @@ def audit_dashboard(request):
     return render(request, "accounts/audit_dashboard.html", context)
 
 
+@staff_member_required
+def admin_ranking(request):
+    query = (request.GET.get("q") or "").strip()
+    musicas = Musica.objects.all().order_by("-acessos", "nome")
+    if query:
+        musicas = musicas.filter(
+            Q(codigo__icontains=query)
+            | Q(nome__icontains=query)
+            | Q(artista__icontains=query)
+        )
+
+    context = {
+        "query": query,
+        "musicas": musicas[:100],
+        "total": musicas.count(),
+        "top_musicas": Musica.objects.order_by("-acessos", "nome")[:10],
+    }
+    return render(request, "accounts/admin_ranking.html", context)
+
+
+@staff_member_required
+def admin_payments(request):
+    status = (request.GET.get("status") or "").strip()
+    payments = ContributionPayment.objects.select_related("user").all()
+    if status:
+        payments = payments.filter(status=status)
+
+    context = {
+        "status": status,
+        "status_choices": ContributionPayment.STATUS_CHOICES,
+        "payments": payments[:100],
+        "total": payments.count(),
+        "approved_count": ContributionPayment.objects.filter(
+            status=ContributionPayment.STATUS_APPROVED
+        ).count(),
+        "pending_count": ContributionPayment.objects.filter(
+            status=ContributionPayment.STATUS_PENDING
+        ).count(),
+    }
+    return render(request, "accounts/admin_payments.html", context)
+
+
 def logout_view(request):
     if request.user.is_authenticated:
         AuditEvent.log_from_request(request, AuditEvent.LOGOUT, user=request.user)

@@ -8,13 +8,21 @@ from django.contrib.auth import views as auth_views
 
 from app.views import status
 from musicas import views
-from accounts.views import CustomLoginView, admin_dashboard, audit_dashboard
+from accounts.views import (
+    CustomLoginView,
+    admin_dashboard,
+    admin_payments,
+    admin_ranking,
+    audit_dashboard,
+)
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("site-admin/", admin_dashboard, name="site_admin"),
     path("site-admin/auditoria/", audit_dashboard, name="site_audit"),
+    path("site-admin/ranking/", admin_ranking, name="site_admin_ranking"),
+    path("site-admin/pagamentos/", admin_payments, name="site_admin_payments"),
 
     # HOME
     path("", views.home, name="home"),
