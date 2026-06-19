@@ -73,6 +73,17 @@ body {
   margin-bottom: 16px;
 }
 
+.rank-form {
+  display: grid;
+  grid-template-columns: 96px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.rank-form input {
+  min-width: 0;
+}
+
 .muted {
   color: #7c6f61;
   font-size: .88rem;
@@ -117,6 +128,7 @@ body {
           <th>Musica</th>
           <th>Artista</th>
           <th>Acessos</th>
+          <th>Acao</th>
         </tr>
       </thead>
       <tbody>
@@ -125,16 +137,24 @@ body {
             <td>{{ musica.codigo }}</td>
             <td>{{ musica.nome }}</td>
             <td>{{ musica.artista }}</td>
-            <td>{{ musica.acessos }}</td>
+            <td colspan="2">
+              <form method="post" class="rank-form">
+                {% csrf_token %}
+                <input type="hidden" name="musica_id" value="{{ musica.id }}">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input class="form-control form-control-sm" type="number" name="acessos" min="0" value="{{ musica.acessos }}">
+                <button class="btn btn-sm btn-outline-primary" type="submit">Salvar</button>
+              </form>
+            </td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="4">Nenhuma musica encontrada.</td>
+            <td colspan="5">Nenhuma musica encontrada.</td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
-    <p class="muted mt-3">Exibindo ate 100 registros. Para editar manualmente, abra no Django admin.</p>
+    <p class="muted mt-3">Exibindo ate 100 registros. Altere o numero de acessos e clique em salvar.</p>
   </section>
 </div>
 {% endblock %}

@@ -139,7 +139,7 @@ body {
   <div class="admin-header">
     <div class="admin-title">
       <h1>Pagamentos Pix</h1>
-      <p>{{ total }} pagamento(s) encontrado(s).</p>
+      <p>{{ total }} pagamento(s) exibido(s), de {{ all_payments_count }} registrado(s).</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <a class="btn btn-outline-secondary" href="{% url 'site_admin' %}">Voltar ao admin</a>
@@ -178,6 +178,7 @@ body {
           <th>Horas</th>
           <th>Status</th>
           <th>Acesso ate</th>
+          <th>Referencia</th>
         </tr>
       </thead>
       <tbody>
@@ -195,10 +196,20 @@ body {
                 <span class="muted">Nao liberado</span>
               {% endif %}
             </td>
+            <td>
+              {% if payment.mercado_pago_payment_id %}
+                MP {{ payment.mercado_pago_payment_id }}
+              {% else %}
+                {{ payment.external_reference }}
+              {% endif %}
+            </td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="6">Nenhum pagamento encontrado.</td>
+            <td colspan="7">
+              Nenhum pagamento encontrado nesta tela.
+              <a href="{% url 'admin:payments_contributionpayment_changelist' %}">Conferir no Django admin</a>.
+            </td>
           </tr>
         {% endfor %}
       </tbody>

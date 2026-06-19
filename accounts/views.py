@@ -271,6 +271,23 @@ def audit_dashboard(request):
 
 @staff_member_required
 def admin_ranking(request):
+    if request.method == "POST":
+        musica_id = request.POST.get("musica_id")
+        acessos = request.POST.get("acessos")
+        query_next = request.POST.get("q") or ""
+        try:
+            acessos_value = max(int(acessos), 0)
+            musica = Musica.objects.get(pk=musica_id)
+            musica.acessos = acessos_value
+            musica.save(update_fields=["acessos"])
+            messages.success(request, f"Ranking atualizado para {musica.nome}.")
+        except (TypeError, ValueError, Musica.DoesNotExist):
+            messages.error(request, "Nao foi possivel atualizar esse item do ranking.")
+
+        if query_next:
+            return redirect(f"{reverse('site_admin_ranking')}?{urlencode({'q': query_next})}")
+        return redirect("site_admin_ranking")
+
     query = (request.GET.get("q") or "").strip()
     musicas = Musica.objects.all().order_by("-acessos", "nome")
     if query:
@@ -292,7 +309,8 @@ def admin_ranking(request):
 @staff_member_required
 def admin_payments(request):
     status = (request.GET.get("status") or "").strip()
-    payments = ContributionPayment.objects.select_related("user").all()
+    all_payments = ContributionPayment.objects.select_related("user").all()
+    payments = all_payments
     if status:
         payments = payments.filter(status=status)
 
@@ -301,6 +319,7 @@ def admin_payments(request):
         "status_choices": ContributionPayment.STATUS_CHOICES,
         "payments": payments[:100],
         "total": payments.count(),
+        "all_payments_count": all_payments.count(),
         "approved_count": ContributionPayment.objects.filter(
             status=ContributionPayment.STATUS_APPROVED
         ).count(),
