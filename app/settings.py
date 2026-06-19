@@ -3,6 +3,7 @@ from pathlib import Path
 
 import dj_database_url
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 from app.version import APP_VERSION as DEFAULT_APP_VERSION
 
@@ -105,15 +106,15 @@ ASGI_APPLICATION = 'app.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+DATABASE_URL = config("DATABASE_URL", default="").strip()
+if not DATABASE_URL:
+    raise ImproperlyConfigured("DATABASE_URL precisa apontar para o PostgreSQL.")
+
 DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    "default": dj_database_url.parse(
+        DATABASE_URL,
         conn_max_age=600,
-        ssl_require=(
-            not DEBUG
-            and bool(os.getenv("DATABASE_URL"))
-            and not os.getenv("DATABASE_URL", "").startswith("sqlite:")
-        ),
+        ssl_require=config("DB_SSL_REQUIRE", default=False, cast=bool),
     )
 }
 
