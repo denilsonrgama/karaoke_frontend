@@ -71,6 +71,11 @@ body {
   gap: 16px;
 }
 
+.admin-accordion {
+  display: grid;
+  gap: 12px;
+}
+
 .admin-panel {
   padding: 18px;
 }
@@ -80,6 +85,40 @@ body {
   font-size: 1.2rem;
   color: #5a2d0c;
   font-weight: 900;
+}
+
+.admin-accordion .admin-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-panel-header {
+  width: 100%;
+  padding: 16px 18px;
+  border: 0;
+  background: #fff;
+  color: #5a2d0c;
+  text-align: left;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.admin-panel-header:not(.collapsed) {
+  background: #fff7e8;
+}
+
+.admin-panel-header::after {
+  float: right;
+  content: "+";
+  color: #8f5f12;
+}
+
+.admin-panel-header:not(.collapsed)::after {
+  content: "-";
+}
+
+.admin-panel-body {
+  padding: 0 18px 18px;
 }
 
 .form-row {
@@ -277,57 +316,75 @@ body {
     </aside>
   </div>
 
-  <section class="admin-panel mt-3">
-    <h2>Musicas mais iniciadas</h2>
-    <ul class="top-list">
-      {% for musica in top_musicas %}
-        <li>
-          <span>
-            <span class="top-list-title">{{ musica.nome }}</span>
-            <span class="top-list-meta d-block">{{ musica.artista }} - {{ musica.codigo }}</span>
-          </span>
-          <span class="top-list-count">{{ musica.acessos }}</span>
-        </li>
-      {% empty %}
-        <li>Nenhuma musica no ranking ainda.</li>
-      {% endfor %}
-    </ul>
-  </section>
-
-  <div class="admin-grid mt-3">
+  <div class="admin-accordion mt-3" id="adminRankingAccordion">
     <section class="admin-panel">
-      <h2>Mais favoritadas</h2>
-      <ul class="top-list">
-        {% for item in top_favorites %}
-          <li>
-            <span>
-              <span class="top-list-title">{{ item.nome|default:"Sem nome" }}</span>
-              <span class="top-list-meta d-block">{{ item.artista }} - {{ item.codigo }}</span>
-            </span>
-            <span class="top-list-count">{{ item.total }}</span>
-          </li>
-        {% empty %}
-          <li>Nenhuma musica favoritada ainda.</li>
-        {% endfor %}
-      </ul>
+      <button class="admin-panel-header" type="button" data-bs-toggle="collapse" data-bs-target="#adminTopStarted" aria-expanded="true" aria-controls="adminTopStarted">
+        Musicas mais iniciadas
+      </button>
+      <div id="adminTopStarted" class="collapse show" data-bs-parent="#adminRankingAccordion">
+        <div class="admin-panel-body">
+          <ul class="top-list">
+            {% for musica in top_musicas %}
+              <li>
+                <span>
+                  <span class="top-list-title">{{ musica.nome }}</span>
+                  <span class="top-list-meta d-block">{{ musica.artista }} - {{ musica.codigo }}</span>
+                </span>
+                <span class="top-list-count">{{ musica.acessos }}</span>
+              </li>
+            {% empty %}
+              <li>Nenhuma musica no ranking ainda.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
     </section>
 
     <section class="admin-panel">
-      <h2>Visualizacoes completas</h2>
-      <ul class="top-list">
-        {% for item in full_views %}
-          <li>
-            <span>
-              <span class="top-list-title">{{ item.nome|default:"Sem nome" }}</span>
-              <span class="top-list-meta d-block">{{ item.artista }} - {{ item.codigo }}</span>
-              <span class="top-list-meta d-block">{{ item.watch_label }} assistido(s)</span>
-            </span>
-            <span class="top-list-count">{{ item.total }}</span>
-          </li>
-        {% empty %}
-          <li>Nenhuma visualizacao completa registrada ainda.</li>
-        {% endfor %}
-      </ul>
+      <button class="admin-panel-header collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adminTopFavorites" aria-expanded="false" aria-controls="adminTopFavorites">
+        Mais favoritadas
+      </button>
+      <div id="adminTopFavorites" class="collapse" data-bs-parent="#adminRankingAccordion">
+        <div class="admin-panel-body">
+          <ul class="top-list">
+            {% for item in top_favorites %}
+              <li>
+                <span>
+                  <span class="top-list-title">{{ item.nome|default:"Sem nome" }}</span>
+                  <span class="top-list-meta d-block">{{ item.artista }} - {{ item.codigo }}</span>
+                </span>
+                <span class="top-list-count">{{ item.total }}</span>
+              </li>
+            {% empty %}
+              <li>Nenhuma musica favoritada ainda.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-panel">
+      <button class="admin-panel-header collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adminFullViews" aria-expanded="false" aria-controls="adminFullViews">
+        Visualizacoes completas
+      </button>
+      <div id="adminFullViews" class="collapse" data-bs-parent="#adminRankingAccordion">
+        <div class="admin-panel-body">
+          <ul class="top-list">
+            {% for item in full_views %}
+              <li>
+                <span>
+                  <span class="top-list-title">{{ item.nome|default:"Sem nome" }}</span>
+                  <span class="top-list-meta d-block">{{ item.artista }} - {{ item.codigo }}</span>
+                  <span class="top-list-meta d-block">{{ item.watch_label }} assistido(s)</span>
+                </span>
+                <span class="top-list-count">{{ item.total }}</span>
+              </li>
+            {% empty %}
+              <li>Nenhuma visualizacao completa registrada ainda.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
     </section>
   </div>
 </div>
