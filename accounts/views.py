@@ -20,7 +20,7 @@ from django.utils import timezone
 from musicas.models import Musica
 from payments.models import ContributionPayment
 from .forms import SiteConfigurationForm, UserRegisterForm
-from .models import AuditEvent, SiteConfiguration, User
+from .models import AuditEvent, SiteConfiguration, User, UserFavorite
 
 
 def duration_label(seconds):
@@ -174,6 +174,20 @@ def admin_dashboard(request):
             cache_count += 1
             cache_total += os.path.getsize(path)
 
+    top_favorites = (
+        UserFavorite.objects.values("codigo", "nome", "artista")
+        .annotate(total=Count("id"))
+        .order_by("-total", "nome")[:10]
+    )
+    full_views = list(
+        AuditEvent.objects.filter(event_type=AuditEvent.VIDEO_WATCH)
+        .values("codigo", "nome", "artista")
+        .annotate(total=Count("id"), total_seconds=Sum("duration_seconds"))
+        .order_by("-total", "-total_seconds", "nome")[:10]
+    )
+    for item in full_views:
+        item["watch_label"] = duration_label(item["total_seconds"])
+
     context = {
         "form": form,
         "site_config": site_config,
@@ -189,6 +203,8 @@ def admin_dashboard(request):
         ).count(),
         "total_musicas": Musica.objects.count(),
         "top_musicas": Musica.objects.order_by("-acessos", "nome")[:5],
+        "top_favorites": top_favorites,
+        "full_views": full_views,
         "tone_cache_count": cache_count,
         "tone_cache_mb": round(cache_total / 1024 / 1024, 1),
     }

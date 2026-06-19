@@ -130,6 +130,26 @@ body {
   border-bottom: 0;
 }
 
+.top-list-title {
+  color: #2a2118;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.top-list-meta {
+  color: #7c6f61;
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.top-list-count {
+  min-width: 72px;
+  color: #5a2d0c;
+  font-weight: 900;
+  text-align: right;
+  white-space: nowrap;
+}
+
 @media (max-width: 820px) {
   .admin-header,
   .admin-grid {
@@ -258,17 +278,57 @@ body {
   </div>
 
   <section class="admin-panel mt-3">
-    <h2>Top musicas</h2>
+    <h2>Musicas mais iniciadas</h2>
     <ul class="top-list">
       {% for musica in top_musicas %}
         <li>
-          <span>{{ musica.nome }} - {{ musica.artista }}</span>
-          <strong>{{ musica.acessos }}</strong>
+          <span>
+            <span class="top-list-title">{{ musica.nome }}</span>
+            <span class="top-list-meta d-block">{{ musica.artista }} - {{ musica.codigo }}</span>
+          </span>
+          <span class="top-list-count">{{ musica.acessos }}</span>
         </li>
       {% empty %}
         <li>Nenhuma musica no ranking ainda.</li>
       {% endfor %}
     </ul>
   </section>
+
+  <div class="admin-grid mt-3">
+    <section class="admin-panel">
+      <h2>Mais favoritadas</h2>
+      <ul class="top-list">
+        {% for item in top_favorites %}
+          <li>
+            <span>
+              <span class="top-list-title">{{ item.nome|default:"Sem nome" }}</span>
+              <span class="top-list-meta d-block">{{ item.artista }} - {{ item.codigo }}</span>
+            </span>
+            <span class="top-list-count">{{ item.total }}</span>
+          </li>
+        {% empty %}
+          <li>Nenhuma musica favoritada ainda.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="admin-panel">
+      <h2>Visualizacoes completas</h2>
+      <ul class="top-list">
+        {% for item in full_views %}
+          <li>
+            <span>
+              <span class="top-list-title">{{ item.nome|default:"Sem nome" }}</span>
+              <span class="top-list-meta d-block">{{ item.artista }} - {{ item.codigo }}</span>
+              <span class="top-list-meta d-block">{{ item.watch_label }} assistido(s)</span>
+            </span>
+            <span class="top-list-count">{{ item.total }}</span>
+          </li>
+        {% empty %}
+          <li>Nenhuma visualizacao completa registrada ainda.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
 </div>
 {% endblock %}
