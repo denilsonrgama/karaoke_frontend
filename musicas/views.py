@@ -17,7 +17,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from accounts.models import AuditEvent, MusicaEstatistica, SiteConfiguration, UserPlay
+from accounts.models import AuditEvent, MusicaEstatistica, SiteConfiguration, UserFavorite, UserPlay
 from musicas.models import Musica
 from .models import Musica
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -61,6 +61,14 @@ def user_usage_context(user):
         "songs_used": used,
         "songs_remaining": max(limit - used, 0),
     }
+
+
+def user_favorite_codes(user):
+    if not getattr(user, "is_authenticated", False):
+        return set()
+    return set(
+        UserFavorite.objects.filter(user=user).values_list("codigo", flat=True)
+    )
 
 
 def paid_access_context(user):
@@ -438,7 +446,58 @@ def lista_musicas(request):
 
     contexto.update(user_usage_context(request.user))
     contexto.update(paid_access_context(request.user))
+    contexto["favorite_codes"] = user_favorite_codes(request.user)
     return render(request, "musicas/lista.html", contexto)
+
+
+@login_required
+def favoritos_musicas(request):
+    favoritos = UserFavorite.objects.filter(user=request.user)
+    context = {
+        "favoritos": favoritos,
+        "total": favoritos.count(),
+    }
+    context.update(user_usage_context(request.user))
+    context.update(paid_access_context(request.user))
+    return render(request, "musicas/favoritos.html", context)
+
+
+@require_POST
+@login_required
+def toggle_favorito(request, codigo):
+    codigo = str(codigo).zfill(5)
+    next_url = request.POST.get("next") or request.GET.get("next") or reverse("lista_musicas")
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = reverse("lista_musicas")
+
+    favorito = UserFavorite.objects.filter(user=request.user, codigo=codigo).first()
+    if favorito:
+        favorito.delete()
+        messages.info(request, "Musica removida dos favoritos.")
+        return redirect(next_url)
+
+    nome = request.POST.get("nome", "").strip()
+    artista = request.POST.get("artista", "").strip()
+    if not nome or not artista:
+        try:
+            musica = buscar_musica_por_codigo(codigo) or {}
+            nome = nome or musica.get("nome", "")
+            artista = artista or musica.get("artista", "")
+        except Exception:
+            pass
+
+    UserFavorite.objects.create(
+        user=request.user,
+        codigo=codigo,
+        nome=nome[:200],
+        artista=artista[:200],
+    )
+    messages.success(request, "Musica adicionada aos favoritos.")
+    return redirect(next_url)
 
 
 # -----------------------------
@@ -477,6 +536,7 @@ def detalhe_musica(request, codigo):
         "musica": musica,
         "token": token,
         "next_url": next_url,
+        "is_favorite": codigo in user_favorite_codes(request.user),
     }
     context.update(user_usage_context(request.user))
     context.update(paid_access_context(request.user))

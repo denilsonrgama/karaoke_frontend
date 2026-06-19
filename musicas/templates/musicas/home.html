@@ -405,6 +405,7 @@ body {
     <div class="home-nav-actions">
       {% if user.is_authenticated %}
         <a href="{% url 'lista_musicas' %}" class="btn btn-primary btn-sm">Buscar musicas</a>
+        <a href="{% url 'favoritos_musicas' %}" class="btn btn-outline-secondary btn-sm">♥ Favoritos</a>
         {% if user.is_staff %}
           <a href="{% url 'site_admin' %}" class="btn btn-outline-secondary btn-sm">Admin</a>
         {% endif %}

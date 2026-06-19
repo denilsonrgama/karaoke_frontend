@@ -4,7 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 
 from musicas.models import Musica
-from .models import AuditEvent, MusicalGenre, SiteConfiguration, User, UserPlay
+from .models import AuditEvent, MusicalGenre, SiteConfiguration, User, UserFavorite, UserPlay
 
 
 @admin.register(MusicalGenre)
@@ -102,6 +102,14 @@ class UserPlayAdmin(admin.ModelAdmin):
     list_display = ("user", "codigo", "nome", "artista", "played_at")
     search_fields = ("user__email", "user__full_name", "codigo", "nome", "artista")
     readonly_fields = ("user", "codigo", "nome", "artista", "played_at")
+
+
+@admin.register(UserFavorite)
+class UserFavoriteAdmin(admin.ModelAdmin):
+    list_display = ("user", "codigo", "nome", "artista", "created_at")
+    search_fields = ("user__email", "user__full_name", "codigo", "nome", "artista")
+    list_filter = ("created_at",)
+    readonly_fields = ("created_at",)
 
 
 @admin.register(AuditEvent)

@@ -224,25 +224,25 @@
         padding: 0 20px 20px;
     }
 
-    .music-link {
-        display: block;
-        height: 100%;
-        text-decoration: none;
-    }
-
     .music-card {
         display: grid;
-        grid-template-columns: 58px minmax(0, 1fr);
+        grid-template-columns: 58px minmax(0, 1fr) auto;
         gap: 12px;
+        align-items: start;
         height: 100%;
         padding: 14px;
         transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
     }
 
-    .music-link:hover .music-card {
+    .music-card:hover {
         border-color: #b8860b;
         box-shadow: 0 12px 24px rgba(184, 134, 11, .14);
         transform: translateY(-1px);
+    }
+
+    .music-details-link {
+        display: block;
+        text-decoration: none;
     }
 
     .music-code {
@@ -271,6 +271,31 @@
         font-size: .9rem;
         font-weight: 800;
         overflow-wrap: anywhere;
+    }
+
+    .favorite-form {
+        margin: 0;
+    }
+
+    .favorite-button {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border: 1px solid rgba(143,95,18,.35);
+        border-radius: 999px;
+        background: #fffdf8;
+        color: #8f5f12;
+        font-size: 1.25rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .favorite-button.active,
+    .favorite-button:hover {
+        border-color: #b02a37;
+        background: #fff0f2;
+        color: #b02a37;
     }
 
     .empty-state {
@@ -435,6 +460,7 @@
         </div>
         <nav class="side-nav" aria-label="Navegacao da lista">
             <a class="active" href="{% url 'lista_musicas' %}">Buscar <span>&rsaquo;</span></a>
+            <a href="{% url 'favoritos_musicas' %}">Favoritos <span>♥</span></a>
             <a href="{% url 'payments:payment_page' %}">Meu acesso <span>&rsaquo;</span></a>
             {% if user.is_staff %}
                 <a href="{% url 'site_admin' %}">Admin <span>&rsaquo;</span></a>
@@ -524,18 +550,35 @@
         {% if musicas %}
             <section class="music-grid" aria-label="Lista de musicas">
                 {% for musica in musicas %}
-                    <a
-                        href="{% url 'detalhe_musica' codigo=musica.codigo %}?next={{ request.get_full_path|urlencode }}"
-                        class="music-link"
-                    >
-                        <article class="music-card">
+                    <article class="music-card">
+                        <a
+                            href="{% url 'detalhe_musica' codigo=musica.codigo %}?next={{ request.get_full_path|urlencode }}"
+                            class="music-details-link"
+                        >
                             <div class="music-code">{{ musica.codigo }}</div>
+                        </a>
+                        <a
+                            href="{% url 'detalhe_musica' codigo=musica.codigo %}?next={{ request.get_full_path|urlencode }}"
+                            class="music-details-link"
+                        >
                             <div>
                                 <div class="music-name">{{ musica.nome }}</div>
                                 <div class="music-artist">{{ musica.artista }}</div>
                             </div>
-                        </article>
-                    </a>
+                        </a>
+                        <form class="favorite-form" method="post" action="{% url 'toggle_favorito' musica.codigo %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <input type="hidden" name="nome" value="{{ musica.nome }}">
+                            <input type="hidden" name="artista" value="{{ musica.artista }}">
+                            <button
+                                class="favorite-button {% if musica.codigo in favorite_codes %}active{% endif %}"
+                                type="submit"
+                                title="{% if musica.codigo in favorite_codes %}Remover dos favoritos{% else %}Adicionar aos favoritos{% endif %}"
+                                aria-label="{% if musica.codigo in favorite_codes %}Remover dos favoritos{% else %}Adicionar aos favoritos{% endif %}"
+                            >{% if musica.codigo in favorite_codes %}♥{% else %}♡{% endif %}</button>
+                        </form>
+                    </article>
                 {% endfor %}
             </section>
         {% else %}

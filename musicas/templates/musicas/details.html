@@ -134,6 +134,26 @@ body {
     flex-wrap: wrap;
 }
 
+.favorite-inline-form {
+    margin: 0;
+}
+
+.favorite-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 31px;
+    border-color: #b02a37;
+    color: #b02a37;
+    font-weight: 900;
+}
+
+.favorite-action.active,
+.favorite-action:hover {
+    background: #b02a37;
+    color: #fff;
+}
+
 .player-body {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 260px;
@@ -451,6 +471,7 @@ pre.letra {
         <nav class="side-nav" aria-label="Navegacao do player">
             <a href="{{ next_url }}">Voltar <span>&rsaquo;</span></a>
             <a class="active" href="#">Player <span>&rsaquo;</span></a>
+            <a href="{% url 'favoritos_musicas' %}">Favoritos <span>♥</span></a>
             <a href="{% url 'payments:payment_page' %}">Meu acesso <span>&rsaquo;</span></a>
             {% if user.is_staff %}
                 <a href="{% url 'site_admin' %}">Admin <span>&rsaquo;</span></a>
@@ -465,6 +486,15 @@ pre.letra {
                 <p class="player-subtitle">{{ musica.artista }} - Codigo {{ musica.codigo }}</p>
             </div>
             <div class="player-actions">
+                <form class="favorite-inline-form" method="post" action="{% url 'toggle_favorito' musica.codigo %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <input type="hidden" name="nome" value="{{ musica.nome }}">
+                    <input type="hidden" name="artista" value="{{ musica.artista }}">
+                    <button class="btn btn-outline-danger btn-sm favorite-action {% if is_favorite %}active{% endif %}" type="submit">
+                        {% if is_favorite %}♥ Favorita{% else %}♡ Favoritar{% endif %}
+                    </button>
+                </form>
                 <button id="palcoBtn" class="btn btn-primary btn-sm" type="button">Modo palco</button>
                 <a href="{{ next_url }}" class="btn btn-outline-secondary btn-sm">Voltar para lista</a>
             </div>

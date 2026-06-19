@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Favoritos - Karaoke do Cowboy{% endblock %}
+
+{% block content %}
+<style>
+body {
+    background: #f6f0e7;
+    color: #2a2118;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.favorites-dashboard {
+    display: grid;
+    grid-template-columns: 224px minmax(0, 1fr);
+    gap: 18px;
+    max-width: 1220px;
+    margin: 0 auto 48px;
+}
+
+.side-panel,
+.favorites-panel,
+.favorite-card {
+    background: #fff;
+    border: 1px solid rgba(95,65,24,.18);
+    border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(66, 43, 14, .08);
+}
+
+.side-panel {
+    position: sticky;
+    top: 96px;
+    align-self: start;
+    overflow: hidden;
+}
+
+.brand-block {
+    padding: 18px;
+    border-bottom: 1px solid #e4d6bd;
+    background: #fffdf8;
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    margin-bottom: 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(184,134,11,.44);
+    background: #15100b;
+    box-shadow: 0 8px 20px rgba(66,43,14,.16);
+    overflow: hidden;
+}
+
+.brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.brand-title {
+    margin: 0;
+    color: #24180d;
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.brand-subtitle {
+    margin: 4px 0 0;
+    color: #7c6f61;
+    font-size: .85rem;
+    font-weight: 700;
+}
+
+.side-nav {
+    padding: 10px;
+}
+
+.side-nav a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    color: #5b4630;
+    border-radius: 6px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.side-nav a.active,
+.side-nav a:hover {
+    color: #fff;
+    background: #8f5f12;
+}
+
+.favorites-panel {
+    overflow: hidden;
+}
+
+.favorites-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 20px;
+    border-bottom: 1px solid #e4d6bd;
+    background: #fffdf8;
+}
+
+.favorites-title {
+    margin: 0;
+    color: #24180d;
+    font-size: 1.55rem;
+    font-weight: 900;
+}
+
+.favorites-kicker {
+    margin: 5px 0 0;
+    color: #7c6f61;
+    font-weight: 700;
+}
+
+.favorites-list {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+}
+
+.favorite-card {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px;
+}
+
+.favorite-code {
+    display: grid;
+    place-items: center;
+    min-width: 58px;
+    height: 58px;
+    border-radius: 8px;
+    background: #fff4d6;
+    color: #7a4d07;
+    font-size: .92rem;
+    font-weight: 900;
+}
+
+.favorite-name {
+    color: #24180d;
+    font-size: 1rem;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.favorite-artist {
+    margin-top: 5px;
+    color: #7c6f61;
+    font-size: .9rem;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.favorite-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.favorite-actions form {
+    margin: 0;
+}
+
+.empty-state {
+    margin: 20px;
+    padding: 26px;
+    border: 1px dashed #c7ad7a;
+    border-radius: 8px;
+    background: #fffdf8;
+    color: #7c6f61;
+    font-weight: 800;
+    text-align: center;
+}
+
+@media (max-width: 860px) {
+    .favorites-dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .side-panel {
+        position: static;
+    }
+
+    .side-nav {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+    }
+
+    .side-nav a {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 640px) {
+    .favorites-header {
+        display: block;
+        padding: 16px;
+    }
+
+    .favorites-header .btn {
+        margin-top: 12px;
+    }
+
+    .favorites-list {
+        padding: 14px;
+    }
+
+    .favorite-card {
+        grid-template-columns: 58px minmax(0, 1fr);
+    }
+
+    .favorite-actions {
+        grid-column: 1 / -1;
+        justify-content: stretch;
+    }
+
+    .favorite-actions .btn,
+    .favorite-actions form {
+        flex: 1 1 150px;
+    }
+}
+</style>
+
+<div class="favorites-dashboard">
+    <aside class="side-panel">
+        <div class="brand-block">
+            <div class="brand-mark">
+                <img src="{% static 'musicas/brand/brand-mark-candidate.png' %}" alt="Karaoke do Cowboy">
+            </div>
+            <div>
+                <h1 class="brand-title">Karaoke do Cowboy</h1>
+                <p class="brand-subtitle">Suas musicas salvas</p>
+            </div>
+        </div>
+        <nav class="side-nav" aria-label="Navegacao de favoritos">
+            <a href="{% url 'lista_musicas' %}">Buscar <span>&rsaquo;</span></a>
+            <a class="active" href="{% url 'favoritos_musicas' %}">Favoritos <span>♥</span></a>
+            <a href="{% url 'payments:payment_page' %}">Meu acesso <span>&rsaquo;</span></a>
+            {% if user.is_staff %}
+                <a href="{% url 'site_admin' %}">Admin <span>&rsaquo;</span></a>
+            {% endif %}
+        </nav>
+    </aside>
+
+    <main class="favorites-panel">
+        <header class="favorites-header">
+            <div>
+                <h2 class="favorites-title">Meus favoritos</h2>
+                <p class="favorites-kicker">{{ total }} musica(s) salva(s) para cantar depois.</p>
+            </div>
+            <a href="{% url 'lista_musicas' %}" class="btn btn-primary btn-sm">Buscar musicas</a>
+        </header>
+
+        {% if favoritos %}
+            <section class="favorites-list" aria-label="Musicas favoritas">
+                {% for favorito in favoritos %}
+                    <article class="favorite-card">
+                        <div class="favorite-code">{{ favorito.codigo }}</div>
+                        <div>
+                            <div class="favorite-name">{{ favorito.nome|default:"Musica sem nome" }}</div>
+                            <div class="favorite-artist">{{ favorito.artista|default:"Artista nao informado" }}</div>
+                        </div>
+                        <div class="favorite-actions">
+                            <a
+                                class="btn btn-primary btn-sm"
+                                href="{% url 'detalhe_musica' favorito.codigo %}?next={{ request.get_full_path|urlencode }}"
+                            >
+                                Cantar
+                            </a>
+                            <form method="post" action="{% url 'toggle_favorito' favorito.codigo %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button class="btn btn-outline-danger btn-sm w-100" type="submit">Remover</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <div class="empty-state">
+                Nenhuma musica favorita ainda. Use o coracao na lista ou no player para salvar suas preferidas.
+            </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

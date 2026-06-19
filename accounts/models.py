@@ -108,6 +108,27 @@ class UserPlay(models.Model):
         return f"{self.codigo} - {self.user_id}"
 
 
+class UserFavorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorite_songs")
+    codigo = models.CharField(max_length=20)
+    nome = models.CharField(max_length=200, blank=True)
+    artista = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Musica favorita"
+        verbose_name_plural = "Musicas favoritas"
+        unique_together = ("user", "codigo")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["codigo"]),
+        ]
+
+    def __str__(self):
+        return f"{self.codigo} - {self.user_id}"
+
+
 class AuditEvent(models.Model):
     LOGIN_SUCCESS = "login_success"
     LOGIN_FAILURE = "login_failure"
